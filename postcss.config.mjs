@@ -1,6 +1,4 @@
-import type { PostCSSConfig } from "@tailwindcss/postcss";
-
-const config: PostCSSConfig = {
+const config = {
   plugins: {
     "@tailwindcss/postcss": {},
   },

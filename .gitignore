@@ -5,3 +5,5 @@ node_modules/
 convex/_generated/
 tsconfig.tsbuildinfo
 *.tsbuildinfo
+*.log
+next-env.d.ts
