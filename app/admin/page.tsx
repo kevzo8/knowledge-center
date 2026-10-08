@@ -118,81 +118,248 @@ function UsersPanel({ token }: { token: string }) {
 function DaysPanel({ token }: { token: string }) {
   const days = useQuery((api as any)?.content?.listDaysAdmin, { token }) as any[] | undefined;
   const upsertDay = useMutation((api as any)?.content?.upsertDay);
-  const upsertLecture = useMutation((api as any)?.content?.upsertLecture);
-  const [dayForm, setDayForm] = useState({ dayNo: 21, week: 4, date: "", title: "", summary: "" });
-  const [lecForm, setLecForm] = useState({ dayId: "", title: "", kind: "slides", url: "", fileName: "", notes: "", order: 1 });
+  const [adding, setAdding] = useState(false);
+  const [form, setForm] = useState({ dayNo: (days?.length ?? 20) + 1, week: 4, date: "", title: "", summary: "" });
 
   return (
-    <section className="space-y-4">
-      <div className="rounded-2xl border bg-white p-4">
-        <h2 className="font-bold">Days ({days?.length ?? "…"})</h2>
-        <div className="mt-2 space-y-1 text-sm">
-          {days?.map((d) => (
-            <div key={d._id} className="rounded-xl border px-3 py-2">
-              <p className="font-bold">Day {d.dayNo}{d.week ? ` (W${d.week})` : ""}{d.date ? ` — ${d.date}` : ""} — {d.title}</p>
-              <p className="text-xs text-slate-500">{d._id}</p>
-            </div>
-          ))}
-        </div>
-        <div className="mt-3 grid gap-2 text-sm sm:grid-cols-3">
-          <input type="number" className="rounded-xl border px-3 py-2" placeholder="dayNo" value={dayForm.dayNo} onChange={(e) => setDayForm({ ...dayForm, dayNo: Number(e.target.value) })} />
-          <input type="number" className="rounded-xl border px-3 py-2" placeholder="week" value={dayForm.week} onChange={(e) => setDayForm({ ...dayForm, week: Number(e.target.value) })} />
-          <input className="rounded-xl border px-3 py-2" placeholder="date e.g. Oct 31 Mon" value={dayForm.date} onChange={(e) => setDayForm({ ...dayForm, date: e.target.value })} />
-          <input className="rounded-xl border px-3 py-2 sm:col-span-2" placeholder="title" value={dayForm.title} onChange={(e) => setDayForm({ ...dayForm, title: e.target.value })} />
-          <input className="rounded-xl border px-3 py-2" placeholder="summary" value={dayForm.summary} onChange={(e) => setDayForm({ ...dayForm, summary: e.target.value })} />
+    <section className="space-y-3">
+      <div className="flex items-center gap-2">
+        <h2 className="font-bold">Days ({days?.length ?? "…"}) — click a day to edit its lectures</h2>
+        <button onClick={() => setAdding(!adding)} className="ml-auto rounded-full border px-4 py-1.5 text-sm font-bold">
+          {adding ? "Cancel" : "+ Add day"}
+        </button>
+      </div>
+      {adding && (
+        <div className="grid gap-2 rounded-2xl border bg-white p-4 text-sm sm:grid-cols-3">
+          <input type="number" className="rounded-xl border px-3 py-2" placeholder="dayNo" value={form.dayNo} onChange={(e) => setForm({ ...form, dayNo: Number(e.target.value) })} />
+          <input type="number" className="rounded-xl border px-3 py-2" placeholder="week" value={form.week} onChange={(e) => setForm({ ...form, week: Number(e.target.value) })} />
+          <input className="rounded-xl border px-3 py-2" placeholder="date e.g. Oct 31 Mon" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
+          <input className="rounded-xl border px-3 py-2 sm:col-span-2" placeholder="title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+          <input className="rounded-xl border px-3 py-2" placeholder="summary" value={form.summary} onChange={(e) => setForm({ ...form, summary: e.target.value })} />
           <button
             onClick={async () => {
-              await (upsertDay as any)({ token, ...dayForm, date: dayForm.date || undefined });
-              setDayForm({ dayNo: dayForm.dayNo + 1, week: dayForm.week, date: "", title: "", summary: "" });
+              await (upsertDay as any)({ token, ...form, date: form.date || undefined });
+              setAdding(false);
+              setForm({ dayNo: form.dayNo + 1, week: form.week, date: "", title: "", summary: "" });
             }}
-            className="rounded-xl bg-slate-900 py-2 font-bold text-white"
+            className="btn-primary rounded-xl py-2 font-bold sm:col-span-3"
           >
-            Add day
+            Create day
           </button>
         </div>
-      </div>
-
-      <div className="rounded-2xl border bg-white p-4">
-        <h2 className="font-bold">Add lecture / link</h2>
-        <p className="text-xs text-slate-500">Paste a day _id from above. kind: slides | link | doc | video.</p>
-        <div className="mt-2 grid gap-2 text-sm sm:grid-cols-2">
-          <input className="rounded-xl border px-3 py-2" placeholder="dayId" value={lecForm.dayId} onChange={(e) => setLecForm({ ...lecForm, dayId: e.target.value })} />
-          <input className="rounded-xl border px-3 py-2" placeholder="title" value={lecForm.title} onChange={(e) => setLecForm({ ...lecForm, title: e.target.value })} />
-          <select className="rounded-xl border px-3 py-2" value={lecForm.kind} onChange={(e) => setLecForm({ ...lecForm, kind: e.target.value })}>
-            <option value="slides">slides</option>
-            <option value="link">link</option>
-            <option value="doc">doc</option>
-            <option value="video">video</option>
-          </select>
-          <input type="number" className="rounded-xl border px-3 py-2" placeholder="order" value={lecForm.order} onChange={(e) => setLecForm({ ...lecForm, order: Number(e.target.value) })} />
-          <input className="rounded-xl border px-3 py-2 sm:col-span-2" placeholder="url (Google Slides / SharePoint)" value={lecForm.url} onChange={(e) => setLecForm({ ...lecForm, url: e.target.value })} />
-          <input className="rounded-xl border px-3 py-2 sm:col-span-2" placeholder="fileName (e.g. Flowcharting.pptx)" value={lecForm.fileName} onChange={(e) => setLecForm({ ...lecForm, fileName: e.target.value })} />
-          <input className="rounded-xl border px-3 py-2 sm:col-span-2" placeholder="notes" value={lecForm.notes} onChange={(e) => setLecForm({ ...lecForm, notes: e.target.value })} />
-          <button
-            onClick={async () => {
-              await (upsertLecture as any)({
-                token,
-                dayId: lecForm.dayId as any,
-                title: lecForm.title,
-                kind: lecForm.kind as any,
-                url: lecForm.url || undefined,
-                fileName: lecForm.fileName || undefined,
-                notes: lecForm.notes || undefined,
-                order: lecForm.order,
-              });
-              setLecForm({ dayId: lecForm.dayId, title: "", kind: "slides", url: "", fileName: "", notes: "", order: lecForm.order + 1 });
-            }}
-            className="rounded-xl bg-indigo-600 py-2 font-bold text-white sm:col-span-2"
-          >
-            Add lecture
-          </button>
-        </div>
-        <p className="mt-2 text-xs text-slate-500">
-          File uploads: use Convex dashboard → Storage for now, then paste URL. Direct in-app upload comes next.
-        </p>
-      </div>
+      )}
+      {!days && <p className="text-sm text-slate-500">Loading…</p>}
+      {days?.map((d) => (
+        <DayCard key={d._id} token={token} day={d} />
+      ))}
     </section>
   );
+}
+
+function DayCard({ token, day }: { token: string; day: any }) {
+  const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [addingLec, setAddingLec] = useState(false);
+  const upsertDay = useMutation((api as any)?.content?.upsertDay);
+  const lectures = useQuery(
+    (api as any)?.content?.listLectures,
+    open ? { dayId: day._id } : "skip"
+  ) as any[] | undefined;
+  const [form, setForm] = useState({ dayNo: day.dayNo, week: day.week ?? 1, date: day.date ?? "", title: day.title, summary: day.summary ?? "", active: day.active });
+
+  return (
+    <div className={`rounded-2xl border bg-white ${day.active ? "" : "opacity-60"}`}>
+      <button onClick={() => setOpen(!open)} className="flex w-full items-center gap-2 px-4 py-3 text-left">
+        <span className="text-slate-400">{open ? "▾" : "▸"}</span>
+        <span className="min-w-0 flex-1">
+          <span className="block truncate font-bold">
+            Day {day.dayNo}{day.week ? ` • W${day.week}` : ""}{day.date ? ` • ${day.date}` : ""} — {day.title}
+          </span>
+          <span className="block text-xs text-slate-500">
+            {open ? (lectures ? `${lectures.length} lecture(s) — click one to edit / upload` : "loading lectures…") : "click to expand"}
+            {!day.active && " • HIDDEN"}
+          </span>
+        </span>
+      </button>
+
+      {open && (
+        <div className="border-t px-4 py-3">
+          <div className="flex gap-2">
+            <button onClick={() => setEditing(!editing)} className="rounded-full border px-3 py-1 text-xs font-bold">
+              {editing ? "Close" : "Edit day"}
+            </button>
+            <button
+              onClick={async () => {
+                await (upsertDay as any)({ token, dayId: day._id, dayNo: day.dayNo, week: day.week, date: day.date, title: day.title, summary: day.summary, active: !day.active });
+              }}
+              className="rounded-full border px-3 py-1 text-xs"
+            >
+              {day.active ? "Hide" : "Show"}
+            </button>
+            <button onClick={() => setAddingLec(!addingLec)} className="rounded-full border px-3 py-1 text-xs font-bold">
+              {addingLec ? "Cancel" : "+ Lecture"}
+            </button>
+          </div>
+
+          {editing && (
+            <div className="mt-2 grid gap-2 text-sm sm:grid-cols-3">
+              <input type="number" className="rounded-xl border px-3 py-2" value={form.dayNo} onChange={(e) => setForm({ ...form, dayNo: Number(e.target.value) })} />
+              <input type="number" className="rounded-xl border px-3 py-2" value={form.week} onChange={(e) => setForm({ ...form, week: Number(e.target.value) })} />
+              <input className="rounded-xl border px-3 py-2" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} placeholder="date" />
+              <input className="rounded-xl border px-3 py-2 sm:col-span-2" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="title" />
+              <input className="rounded-xl border px-3 py-2" value={form.summary} onChange={(e) => setForm({ ...form, summary: e.target.value })} placeholder="summary" />
+              <button
+                onClick={async () => {
+                  await (upsertDay as any)({ token, dayId: day._id, ...form, date: form.date || undefined, active: day.active });
+                  setEditing(false);
+                }}
+                className="btn-primary rounded-xl py-2 font-bold sm:col-span-3"
+              >
+                Save day
+              </button>
+            </div>
+          )}
+
+          {addingLec && <LectureForm token={token} dayId={day._id} nextOrder={(lectures?.length ?? 0) + 1} onDone={() => setAddingLec(false)} />}
+
+          <div className="mt-2 space-y-2">
+            {lectures?.map((l) => (
+              <LectureRow key={l._id} token={token} lecture={l} />
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function LectureForm({ token, dayId, lecture, nextOrder, onDone }: { token: string; dayId: string; lecture?: any; nextOrder: number; onDone: () => void }) {
+  const upsertLecture = useMutation((api as any)?.content?.upsertLecture);
+  const [f, setF] = useState({
+    title: lecture?.title ?? "",
+    kind: lecture?.kind ?? "slides",
+    url: lecture?.url ?? "",
+    fileName: lecture?.fileName ?? "",
+    notes: lecture?.notes ?? "",
+    order: lecture?.order ?? nextOrder,
+  });
+  const [saving, setSaving] = useState(false);
+
+  return (
+    <div className="mt-2 grid gap-2 rounded-xl bg-slate-50 p-3 text-sm sm:grid-cols-2">
+      <input className="rounded-xl border px-3 py-2 sm:col-span-2" placeholder="title" value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} />
+      <select className="rounded-xl border px-3 py-2" value={f.kind} onChange={(e) => setF({ ...f, kind: e.target.value })}>
+        <option value="slides">slides</option>
+        <option value="link">link</option>
+        <option value="doc">doc</option>
+        <option value="video">video</option>
+      </select>
+      <input type="number" className="rounded-xl border px-3 py-2" placeholder="order" value={f.order} onChange={(e) => setF({ ...f, order: Number(e.target.value) })} />
+      <input className="rounded-xl border px-3 py-2 sm:col-span-2" placeholder="URL (Google Slides / SharePoint / video)" value={f.url} onChange={(e) => setF({ ...f, url: e.target.value })} />
+      <input className="rounded-xl border px-3 py-2 sm:col-span-2" placeholder="notes" value={f.notes} onChange={(e) => setF({ ...f, notes: e.target.value })} />
+      <button
+        disabled={saving || !f.title.trim()}
+        onClick={async () => {
+          setSaving(true);
+          await (upsertLecture as any)({
+            token,
+            lectureId: lecture?._id,
+            dayId: dayId as any,
+            title: f.title.trim(),
+            kind: f.kind as any,
+            url: f.url.trim() || undefined,
+            fileName: f.fileName || lecture?.fileName || undefined,
+            notes: f.notes.trim() || undefined,
+            order: f.order,
+          });
+          setSaving(false);
+          onDone();
+        }}
+        className="btn-primary rounded-xl py-2 font-bold sm:col-span-2 disabled:opacity-50"
+      >
+        {saving ? "Saving…" : lecture ? "Save lecture" : "Add lecture"}
+      </button>
+    </div>
+  );
+}
+
+function LectureRow({ token, lecture }: { token: string; lecture: any }) {
+  const [editing, setEditing] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [msg, setMsg] = useState("");
+  const deleteLecture = useMutation((api as any)?.content?.deleteLecture);
+  const genUrl = useMutation((api as any)?.content?.generateUploadUrl);
+  const attach = useMutation((api as any)?.content?.attachFileToLecture);
+
+  async function upload(file: File) {
+    setUploading(true);
+    setMsg("");
+    try {
+      const url = await (genUrl as any)({ token });
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": file.type || "application/octet-stream" },
+        body: file,
+      });
+      const { storageId } = await res.json();
+      await (attach as any)({ token, lectureId: lecture._id, fileId: storageId, fileName: file.name });
+      setMsg("Uploaded ✅");
+    } catch (e: any) {
+      setMsg(e?.message ?? "Upload failed");
+    }
+    setUploading(false);
+  }
+
+  return (
+    <div className="rounded-xl border px-3 py-2">
+      <div className="flex items-center gap-2">
+        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase">{lecture.kind}</span>
+        <span className="min-w-0 flex-1 truncate text-sm font-bold">{lecture.title}</span>
+        <button onClick={() => setEditing(!editing)} className="rounded-full border px-2.5 py-1 text-xs font-bold">
+          {editing ? "Close" : "Edit"}
+        </button>
+        <button
+          onClick={async () => {
+            if (confirm(`Delete "${lecture.title}"?`)) await (deleteLecture as any)({ token, lectureId: lecture._id });
+          }}
+          className="rounded-full border px-2.5 py-1 text-xs text-red-600"
+        >
+          Delete
+        </button>
+      </div>
+      <div className="mt-1 flex flex-wrap items-center gap-2 text-xs">
+        {lecture.url && <a href={lecture.url} target="_blank" className="text-indigo-600 underline">Open link ↗</a>}
+        {lecture.fileId && <StoredFileLink fileId={lecture.fileId} fileName={lecture.fileName ?? "file"} />}
+        {!lecture.fileId && lecture.fileName && <span className="text-slate-500">📎 {lecture.fileName} (not uploaded yet)</span>}
+        {lecture.notes && <span className="text-slate-500">• {lecture.notes}</span>}
+      </div>
+      <label className="mt-1.5 flex cursor-pointer items-center gap-2 text-xs font-bold text-indigo-700">
+        <span className="rounded-full border border-indigo-300 px-3 py-1">
+          {uploading ? "Uploading…" : lecture.fileId ? "↻ Replace file" : "⬆ Upload file"}
+        </span>
+        <input
+          type="file"
+          className="hidden"
+          disabled={uploading}
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) upload(f);
+            e.target.value = "";
+          }}
+        />
+        {msg && <span className="font-normal text-slate-500">{msg}</span>}
+      </label>
+      {editing && (
+        <LectureForm token={token} dayId={lecture.dayId} lecture={lecture} nextOrder={lecture.order} onDone={() => setEditing(false)} />
+      )}
+    </div>
+  );
+}
+
+function StoredFileLink({ fileId, fileName }: { fileId: string; fileName: string }) {
+  const url = useQuery((api as any)?.content?.getFileUrl, { fileId: fileId as any }) as string | null | undefined;
+  if (!url) return <span className="text-slate-500">📎 {fileName}…</span>;
+  return <a href={url} target="_blank" className="text-indigo-600 underline">📎 {fileName} ↗</a>;
 }
 
 function QuizPanel({ token }: { token: string }) {
