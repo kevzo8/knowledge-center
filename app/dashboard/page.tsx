@@ -31,7 +31,7 @@ export default function Dashboard() {
   const user = me as { username: string; role: string; displayName: string };
 
   return (
-    <main className="mx-auto max-w-5xl px-5 py-8">
+    <main className="mx-auto max-w-6xl px-5 py-8">
       <header className="flex items-center gap-3">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.3em] text-indigo-600">
@@ -79,31 +79,55 @@ export default function Dashboard() {
         </section>
       )}
 
-      <section className="mt-6 grid gap-4 lg:grid-cols-[1.5fr_1fr]">
-        <div>
-          <h2 className="text-sm font-bold uppercase tracking-widest">Training calendar — tap a day to open it</h2>
+      <section className="mt-6">
+        <h2 className="text-sm font-bold uppercase tracking-widest">Training calendar — tap a day to open it</h2>
+        <div className="mt-2">
+          <TrainingCalendar days={days as any} />
+        </div>
+      </section>
+
+      <section className="mt-6">
+        <h2 className="text-sm font-bold uppercase tracking-widest">🏆 Leaderboard — top trainees</h2>
+        {!board && <p className="mt-2 text-sm text-slate-500">Loading…</p>}
+        {board && board.length === 0 && (
+          <p className="mt-2 text-sm text-slate-500">
+            No XP yet — finish a lecture or quiz to get on the board.
+          </p>
+        )}
+        {board && board.length > 0 && (
           <div className="mt-2">
-            <TrainingCalendar days={days as any} />
-          </div>
-        </div>
-        <div>
-          <h2 className="text-sm font-bold uppercase tracking-widest">🏆 Leaderboard</h2>
-          <div className="mt-2 space-y-1.5">
-            {board?.map((r, i) => (
-              <div
-                key={r.username}
-                className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-sm ${
-                  r.username === user.username ? "bg-indigo-50 border-indigo-300" : "bg-white"
-                }`}
-              >
-                <span className="w-6 font-black">#{i + 1}</span>
-                <span className="flex-1 truncate font-semibold">{r.displayName}</span>
-                <span className="font-mono text-xs">Lv{r.level} • {r.xp}xp</span>
+            <div className="grid gap-2 sm:grid-cols-3">
+              {board.slice(0, 3).map((r, i) => (
+                <div
+                  key={r.username}
+                  className={`card-lift rounded-2xl border bg-white p-4 text-center ${
+                    r.username === user.username ? "border-indigo-400 ring-1 ring-indigo-300" : ""
+                  }`}
+                >
+                  <p className="text-2xl">{["🥇", "🥈", "🥉"][i]}</p>
+                  <p className="mt-1 truncate font-bold">{r.displayName}</p>
+                  <p className="font-mono text-xs text-slate-500">Lv{r.level} • {r.xp} XP</p>
+                </div>
+              ))}
+            </div>
+            {board.length > 3 && (
+              <div className="mt-2 space-y-1.5">
+                {board.slice(3).map((r, i) => (
+                  <div
+                    key={r.username}
+                    className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-sm ${
+                      r.username === user.username ? "bg-indigo-50 border-indigo-300" : "bg-white"
+                    }`}
+                  >
+                    <span className="w-8 font-black">#{i + 4}</span>
+                    <span className="flex-1 truncate font-semibold">{r.displayName}</span>
+                    <span className="font-mono text-xs">Lv{r.level} • {r.xp}xp</span>
+                  </div>
+                ))}
               </div>
-            ))}
-            {!board && <p className="text-sm text-slate-500">Loading…</p>}
+            )}
           </div>
-        </div>
+        )}
       </section>
     </main>
   );

@@ -110,13 +110,13 @@ export default function TrainingCalendar({ days }: { days: CalDay[] | undefined 
         </button>
       </div>
 
-      <div className="mt-2 grid grid-cols-7 gap-1 text-center text-[10px] font-bold uppercase tracking-wider text-slate-400 sm:text-[11px]">
+      <div className="mt-2 grid grid-cols-7 gap-1 text-center text-[10px] font-bold uppercase tracking-wider text-slate-400 sm:gap-1.5 sm:text-xs">
         {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => (
           <div key={d} className="py-1">{d}</div>
         ))}
       </div>
 
-      <div className="grid grid-cols-7 gap-1">
+      <div className="grid grid-cols-7 gap-1 sm:gap-1.5">
         {cells.map((c) => {
           const t = byDate.get(keyOf(c.y, c.m, c.d));
           const isToday = keyOf(c.y, c.m, c.d) === todayKey;
@@ -125,7 +125,7 @@ export default function TrainingCalendar({ days }: { days: CalDay[] | undefined 
             return (
               <div
                 key={`${c.y}-${c.m}-${c.d}`}
-                className={`min-h-[44px] rounded-xl px-1 py-1 text-xs sm:min-h-[64px] sm:text-sm ${
+                className={`min-h-[56px] rounded-xl px-1.5 py-1.5 text-sm sm:min-h-[110px] sm:text-base ${
                   c.inMonth ? "text-slate-400" : "text-slate-300"
                 } ${isToday ? "ring-2 ring-slate-400" : ""}`}
               >
@@ -138,17 +138,17 @@ export default function TrainingCalendar({ days }: { days: CalDay[] | undefined 
               key={`${c.y}-${c.m}-${c.d}`}
               onClick={() => router.push(`/learn/${t._id}`)}
               title={t.title}
-              className={`card-lift min-h-[44px] rounded-xl border px-1 py-1 text-left sm:min-h-[64px] ${st?.cell ?? "bg-slate-50"} ${
+              className={`card-lift min-h-[56px] rounded-xl border px-1.5 py-1.5 text-left sm:min-h-[110px] ${st?.cell ?? "bg-slate-50"} ${
                 isToday ? "ring-2 ring-slate-900" : ""
               }`}
             >
               <span className="flex items-center gap-1">
-                <span className="text-xs text-slate-500 sm:text-sm">{c.d}</span>
-                <span className={`rounded-full px-1.5 py-px text-[9px] font-bold text-white sm:text-[10px] ${st?.badge ?? "bg-slate-500"}`}>
+                <span className="text-sm font-medium text-slate-500 sm:text-base">{c.d}</span>
+                <span className={`rounded-full px-1.5 py-px text-[9px] font-bold text-white sm:text-[11px] ${st?.badge ?? "bg-slate-500"}`}>
                   D{t.dayNo}
                 </span>
               </span>
-              <span className="mt-0.5 hidden text-[11px] font-medium leading-tight sm:line-clamp-2">
+              <span className="mt-1 hidden text-xs font-medium leading-snug sm:line-clamp-3">
                 {shortTitle(t.title)}
               </span>
             </button>
