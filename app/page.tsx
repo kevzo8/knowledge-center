@@ -49,8 +49,8 @@ export default function Home() {
       <p className="text-xs font-bold uppercase tracking-[0.3em] text-indigo-600">
         SVI Knowledge Center
       </p>
-      <h1 className="mt-3 text-4xl font-black tracking-tight">
-        Learn by day. Practice. Level up.
+      <h1 className="mt-3 text-4xl font-extrabold tracking-tight">
+        Learn by day. <span className="text-gradient">Practice. Level up.</span>
       </h1>
       <p className="mx-auto mt-4 max-w-xl text-slate-600">
         4 weeks, 20 days (Oct 5–30). War Card v1 → v2 → Solitaire capstone.
@@ -59,7 +59,7 @@ export default function Home() {
       <div className="mt-8 flex items-center justify-center gap-3">
         <Link
           href="/login"
-          className="rounded-full bg-slate-900 px-6 py-3 text-sm font-bold text-white"
+          className="btn-primary rounded-full px-6 py-3 text-sm font-bold"
         >
           Log in →
         </Link>
@@ -72,7 +72,7 @@ export default function Home() {
       </div>
       <div className="mx-auto mt-10 space-y-4 text-left">
         {WEEKS.map((week) => (
-          <div key={week.w} className="rounded-2xl border bg-white p-4">
+          <div key={week.w} className="card-lift rounded-2xl border bg-white p-4">
             <p className="text-sm font-black">{week.w}</p>
             <ul className="mt-2 space-y-1 text-sm text-slate-600">
               {week.days.map((d) => (

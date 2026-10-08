@@ -1,5 +1,91 @@
 @import "tailwindcss";
 
+:root {
+  --kc-ink: #232838;
+  --kc-muted: #5b6478;
+  --kc-accent: #4f46e5;
+  --kc-accent-2: #7c3aed;
+  --kc-paper: #f7f5f0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
 body {
-  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-family: var(--font-roboto), ui-sans-serif, system-ui, sans-serif;
+  color: var(--kc-ink);
+  background: var(--kc-paper);
+  min-height: 100vh;
+}
+
+/* soft warm wash behind everything */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(110% 70% at 12% 0%, rgba(99, 102, 241, 0.14), transparent 65%),
+    radial-gradient(110% 70% at 88% 8%, rgba(168, 85, 247, 0.12), transparent 65%),
+    radial-gradient(130% 90% at 50% 110%, rgba(251, 191, 36, 0.12), transparent 70%),
+    linear-gradient(180deg, #faf8f4 0%, #f7f5f0 45%, #f1ede4 100%);
+}
+
+h1, h2 {
+  font-family: var(--font-slab), Georgia, serif;
+  letter-spacing: -0.01em;
+}
+
+code, pre, .font-mono {
+  font-family: var(--font-robomon), ui-monospace, monospace !important;
+}
+
+::selection {
+  background: rgba(99, 102, 241, 0.25);
+}
+
+/* headline gradient text */
+.text-gradient {
+  background: linear-gradient(100deg, #4338ca 10%, #7c3aed 45%, #db2777 90%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* nicer cards */
+.card-lift {
+  transition: transform 0.15s ease, box-shadow 0.2s ease;
+}
+.card-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(67, 56, 202, 0.14);
+}
+
+/* friendlier form controls */
+input:not([type="checkbox"]):not([type="radio"]),
+select,
+textarea {
+  border-color: #d9d4c7 !important;
+  background: #fffdf9 !important;
+  color: var(--kc-ink) !important;
+}
+input:focus, select:focus, textarea:focus {
+  border-color: var(--kc-accent) !important;
+}
+
+/* primary buttons: gradient instead of flat black */
+.btn-primary {
+  background: linear-gradient(100deg, #4338ca, #7c3aed);
+  color: #fff !important;
+  box-shadow: 0 8px 20px rgba(99, 102, 241, 0.35);
+  transition: transform 0.12s ease, box-shadow 0.2s ease, filter 0.15s ease;
+}
+.btn-primary:hover {
+  filter: brightness(1.07);
+  box-shadow: 0 10px 26px rgba(99, 102, 241, 0.45);
+}
+.btn-primary:active {
+  transform: scale(0.98);
 }

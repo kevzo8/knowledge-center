@@ -50,7 +50,7 @@ export default function Login() {
           />
           {err && <p className="text-sm text-red-600">{err}</p>}
           <button
-            className="rounded-xl bg-slate-900 py-2.5 text-sm font-bold text-white"
+            className="btn-primary rounded-xl py-2.5 text-sm font-bold"
             type="submit"
           >
             Login →
