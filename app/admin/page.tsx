@@ -3,6 +3,7 @@ import { useMutation, useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { useMe } from "../../lib/useMe";
 import { useState } from "react";
+import ThemeToggle from "../../components/ThemeToggle";
 
 export default function Admin() {
   const { token, me, loading } = useMe();
@@ -22,7 +23,10 @@ export default function Admin() {
     <main className="mx-auto max-w-5xl px-5 py-8">
       <div className="flex items-center gap-3">
         <h1 className="text-2xl font-black">Admin <span className="text-sm font-normal text-slate-500">({me.displayName} • {me.role})</span></h1>
-        <a href="/dashboard" className="ml-auto rounded-full border px-4 py-2 text-sm">← Dashboard</a>
+        <div className="ml-auto flex items-center gap-2">
+          <ThemeToggle />
+          <a href="/dashboard" className="rounded-full border px-4 py-2 text-sm">← Dashboard</a>
+        </div>
       </div>
       <div className="mt-4 flex gap-2">
         {(["users", "days", "quiz"] as const).map((t) => (

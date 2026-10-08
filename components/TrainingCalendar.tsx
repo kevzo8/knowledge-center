@@ -34,10 +34,26 @@ function keyOf(y: number, m: number, d: number) {
 }
 
 const WEEK_STYLE: Record<number, { cell: string; badge: string; label: string }> = {
-  1: { cell: "bg-indigo-50 border-indigo-300 hover:bg-indigo-100", badge: "bg-indigo-600", label: "W1 Foundations" },
-  2: { cell: "bg-fuchsia-50 border-fuchsia-300 hover:bg-fuchsia-100", badge: "bg-fuchsia-600", label: "W2 Java → War Card" },
-  3: { cell: "bg-amber-50 border-amber-300 hover:bg-amber-100", badge: "bg-amber-500", label: "W3 Panel + Deep Java" },
-  4: { cell: "bg-emerald-50 border-emerald-300 hover:bg-emerald-100", badge: "bg-emerald-600", label: "W4 Solitaire" },
+  1: {
+    cell: "bg-indigo-50 border-indigo-300 hover:bg-indigo-100 dark:bg-indigo-950/70 dark:border-indigo-800 dark:hover:bg-indigo-900/70",
+    badge: "bg-indigo-600",
+    label: "W1 Foundations",
+  },
+  2: {
+    cell: "bg-fuchsia-50 border-fuchsia-300 hover:bg-fuchsia-100 dark:bg-fuchsia-950/70 dark:border-fuchsia-800 dark:hover:bg-fuchsia-900/70",
+    badge: "bg-fuchsia-600",
+    label: "W2 Java → War Card",
+  },
+  3: {
+    cell: "bg-amber-50 border-amber-300 hover:bg-amber-100 dark:bg-amber-950/70 dark:border-amber-800 dark:hover:bg-amber-900/70",
+    badge: "bg-amber-500",
+    label: "W3 Panel + Deep Java",
+  },
+  4: {
+    cell: "bg-emerald-50 border-emerald-300 hover:bg-emerald-100 dark:bg-emerald-950/70 dark:border-emerald-800 dark:hover:bg-emerald-900/70",
+    badge: "bg-emerald-600",
+    label: "W4 Solitaire",
+  },
 };
 
 function shortTitle(title: string) {

@@ -160,15 +160,3 @@ input:focus, select:focus, textarea:focus {
 .dark .border-slate-300 {
   border-color: var(--kc-line) !important;
 }
-.dark .bg-indigo-50 {
-  background-color: rgba(79, 70, 229, 0.18) !important;
-}
-.dark .border-indigo-300 {
-  border-color: rgba(129, 140, 248, 0.5) !important;
-}
-.dark .bg-emerald-50 {
-  background-color: rgba(16, 185, 129, 0.14) !important;
-}
-.dark .border-emerald-200 {
-  border-color: rgba(52, 211, 153, 0.4) !important;
-}

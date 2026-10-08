@@ -4,6 +4,7 @@ import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { setToken } from "../../lib/auth-token";
 import { useRouter } from "next/navigation";
+import ThemeToggle from "../../components/ThemeToggle";
 
 export default function Login() {
   const [username, setUsername] = useState("");
@@ -25,7 +26,10 @@ export default function Login() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center p-6">
+    <main className="relative flex min-h-screen items-center justify-center p-6">
+      <div className="absolute right-4 top-4">
+        <ThemeToggle />
+      </div>
       <div className="w-full max-w-sm rounded-3xl border bg-white p-8 shadow">
         <p className="text-xs font-bold uppercase tracking-[0.3em] text-indigo-600">
           SVI Knowledge Center

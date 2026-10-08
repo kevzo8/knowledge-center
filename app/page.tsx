@@ -1,4 +1,5 @@
 import Link from "next/link";
+import ThemeToggle from "../components/ThemeToggle";
 
 const WEEKS = [
   {
@@ -45,7 +46,10 @@ const WEEKS = [
 
 export default function Home() {
   return (
-    <main className="mx-auto max-w-3xl px-6 py-16 text-center">
+    <main className="relative mx-auto max-w-3xl px-6 py-16 text-center">
+      <div className="absolute right-4 top-4 sm:right-6 sm:top-6">
+        <ThemeToggle />
+      </div>
       <p className="text-xs font-bold uppercase tracking-[0.3em] text-indigo-600">
         SVI Knowledge Center
       </p>

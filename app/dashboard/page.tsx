@@ -6,6 +6,7 @@ import { clearToken } from "../../lib/auth-token";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import TrainingCalendar from "../../components/TrainingCalendar";
+import ThemeToggle from "../../components/ThemeToggle";
 
 export default function Dashboard() {
   const { token, me, loading } = useMe();
@@ -44,7 +45,8 @@ export default function Dashboard() {
             </span>
           </h1>
         </div>
-        <div className="ml-auto flex gap-2">
+        <div className="ml-auto flex items-center gap-2">
+          <ThemeToggle />
           {(user.role === "admin" || user.role === "trainer") && (
             <Link href="/admin" className="rounded-full border px-4 py-2 text-sm font-bold">
               Admin

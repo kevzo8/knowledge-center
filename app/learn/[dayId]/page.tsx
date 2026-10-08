@@ -4,6 +4,7 @@ import { api } from "../../../convex/_generated/api";
 import { useMe } from "../../../lib/useMe";
 import { use, useState } from "react";
 import Link from "next/link";
+import ThemeToggle from "../../../components/ThemeToggle";
 
 export default function DayPage({ params }: { params: Promise<{ dayId: string }> }) {
   const { dayId } = use(params);
@@ -47,7 +48,10 @@ export default function DayPage({ params }: { params: Promise<{ dayId: string }>
 
   return (
     <main className="mx-auto max-w-3xl px-5 py-8">
-      <Link href="/dashboard" className="text-sm underline">← All days</Link>
+      <div className="flex items-center justify-between gap-2">
+        <Link href="/dashboard" className="text-sm underline">← All days</Link>
+        <ThemeToggle />
+      </div>
       {msg && <p className="mt-2 rounded-xl bg-emerald-50 border border-emerald-200 px-3 py-2 text-sm">{msg}</p>}
 
       <h1 className="mt-2 text-xl font-black">Lectures & slides</h1>
