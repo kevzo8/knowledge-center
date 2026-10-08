@@ -6,10 +6,10 @@ const WEEKS = [
     w: "Week 1 — Foundations (Oct 5–9)",
     days: [
       "Day 1 — Introduction, Expectation Setting & Career Paths + 3 PDF readings",
-      "Day 2 — Basic Computer Concepts",
-      "Day 3 — Batch Jobs & Batch Processing",
-      "Day 4 — Databases + Sort & Search",
-      "Day 5 — SDLC",
+      "Day 2 — SDLC",
+      "Day 3 — Basic Computer Concepts",
+      "Day 4 — Batch Jobs & Batch Processing",
+      "Day 5 — Databases + Sort & Search",
     ],
   },
   {

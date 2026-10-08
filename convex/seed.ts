@@ -23,10 +23,10 @@ export const seedAll = mutation({
     }[] = [
       // Week 1 — Foundations
       { dayNo: 1, week: 1, date: "Oct 5 Mon", title: "Day 1 — Introduction, Expectation Setting & Career Paths", summary: "Welcome, how training runs, what 'done' looks like, mainframe/dev career paths. Required reading: the 3 boss-assigned PDFs." },
-      { dayNo: 2, week: 1, date: "Oct 6 Tue", title: "Day 2 — Basic Computer Concepts", summary: "Hardware/software, files, OS basics from Basic Computer Concept Material.pptx." },
-      { dayNo: 3, week: 1, date: "Oct 7 Wed", title: "Day 3 — Batch Jobs & Batch Processing", summary: "Job streams, batch vs online, trace Batch Processing Examples." },
-      { dayNo: 4, week: 1, date: "Oct 8 Thu", title: "Day 4 — Databases + Sort & Search", summary: "Database TIE session + Sort and Search deck." },
-      { dayNo: 5, week: 1, date: "Oct 9 Fri", title: "Day 5 — SDLC", summary: "System Integration & SDLC process deck + quiz + week 1 retro." },
+      { dayNo: 2, week: 1, date: "Oct 6 Tue", title: "Day 2 — SDLC", summary: "System Integration & SDLC process: how software gets built." },
+      { dayNo: 3, week: 1, date: "Oct 7 Wed", title: "Day 3 — Basic Computer Concepts", summary: "Hardware/software, files, OS basics from Basic Computer Concept Material.pptx." },
+      { dayNo: 4, week: 1, date: "Oct 8 Thu", title: "Day 4 — Batch Jobs & Batch Processing", summary: "Job streams, batch vs online, trace Batch Processing Examples." },
+      { dayNo: 5, week: 1, date: "Oct 9 Fri", title: "Day 5 — Databases + Sort & Search", summary: "Database TIE session + Sort and Search deck. Week 1 quiz + retro." },
       // Week 2 — Logic to Java to War Card
       { dayNo: 6, week: 2, date: "Oct 12 Mon", title: "Day 6 — Flowcharting + Pseudocoding", summary: "Think in steps: flowcharts then pseudocode. Foundation for Java." },
       { dayNo: 7, week: 2, date: "Oct 13 Tue", title: "Day 7 — Java Intro & Setup", summary: "JDK, IDE, first program, compile/run, variables & types. (Trainer adds Java deck/link.)" },
@@ -61,16 +61,16 @@ export const seedAll = mutation({
       { dayId: d1, title: "Reading 3: p363-ashenhurst IS 72 (required)", kind: "doc", fileName: "p363-ashenhurst IS 72.pdf", notes: "Boss-assigned reading.", order: 3 },
       { dayId: d1, title: "Expectation setting & career paths (trainer deck — to add)", kind: "slides", notes: "Add your intro/expectations/career-path slides here.", order: 4 },
       { dayId: d1, title: "Knowledge Center (SharePoint reference)", kind: "link", url: KC_URL, notes: "Old SharePoint.", order: 5 },
-      // Day 2
-      { dayId: d2, title: "Basic Computer Concept Material", kind: "slides", fileName: "Basic Computer Concept Material.pptx", notes: "", order: 1 },
-      // Day 3
-      { dayId: d3, title: "Batch Job Stream", kind: "slides", fileName: "Batch Job Stream.pptx", notes: "", order: 1 },
-      { dayId: d3, title: "Batch Processing Examples", kind: "slides", fileName: "Batch Processing Examples.pptx", notes: "", order: 2 },
-      // Day 4
-      { dayId: d4, title: "Database TIE session", kind: "slides", fileName: "Database TIE session.pptx", notes: "", order: 1 },
-      { dayId: d4, title: "Sort and Search", kind: "slides", fileName: "Sort and Search.pptx", notes: "", order: 2 },
-      // Day 5
-      { dayId: d5, title: "SDLC — System Integration & Software Development Process", kind: "link", url: SDLC_URL, notes: "Master deck. PDF: System Integration and Software Development Process.pdf", order: 1 },
+      // Day 2 — SDLC
+      { dayId: d2, title: "SDLC — System Integration & Software Development Process", kind: "link", url: SDLC_URL, notes: "Master deck. PDF: System Integration and Software Development Process.pdf", order: 1 },
+      // Day 3 — computers
+      { dayId: d3, title: "Basic Computer Concept Material", kind: "slides", fileName: "Basic Computer Concept Material.pptx", notes: "", order: 1 },
+      // Day 4 — batch
+      { dayId: d4, title: "Batch Job Stream", kind: "slides", fileName: "Batch Job Stream.pptx", notes: "", order: 1 },
+      { dayId: d4, title: "Batch Processing Examples", kind: "slides", fileName: "Batch Processing Examples.pptx", notes: "", order: 2 },
+      // Day 5 — DB + sort/search
+      { dayId: d5, title: "Database TIE session", kind: "slides", fileName: "Database TIE session.pptx", notes: "", order: 1 },
+      { dayId: d5, title: "Sort and Search", kind: "slides", fileName: "Sort and Search.pptx", notes: "", order: 2 },
       // Day 6
       { dayId: d6, title: "Flowcharting", kind: "slides", fileName: "Flowcharting.pptx", notes: "", order: 1 },
       { dayId: d6, title: "Pseudocoding", kind: "slides", fileName: "pseudocoding.pptx", notes: "", order: 2 },
@@ -140,6 +140,54 @@ export const seedAll = mutation({
       await ctx.db.insert("questions", { quizId: q3, ...q });
 
     return { skipped: false, days: dayIds.length };
+  },
+});
+
+// One-time fix: actual conducted order was Day 2 = SDLC, Day 3 = computers,
+// Day 4 = batch, Day 5 = DB + sort/search. Moves week-1 lectures to the
+// right days and renames the day titles. Safe to run once (idempotent guard).
+export const fixWeek1Order = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const days = await ctx.db.query("days").collect();
+    const byNo = new Map(days.map((d) => [d.dayNo, d]));
+    const d2 = byNo.get(2);
+    const d3 = byNo.get(3);
+    const d4 = byNo.get(4);
+    const d5 = byNo.get(5);
+    if (!d2 || !d3 || !d4 || !d5) throw new Error("Week 1 days missing");
+    if (d2.title.includes("SDLC")) return { alreadyFixed: true };
+
+    // Lecture sets move with the topic: old dayNo -> new dayNo
+    const moves: Record<number, typeof d2> = { 2: d3, 3: d4, 4: d5, 5: d2 };
+    const newIds: Record<number, typeof d2._id> = {
+      2: d2._id,
+      3: d3._id,
+      4: d4._id,
+      5: d5._id,
+    };
+    const lectures = await ctx.db.query("lectures").collect();
+    let moved = 0;
+    for (const l of lectures) {
+      const owner = days.find((d) => d._id === l.dayId);
+      if (!owner || owner.dayNo < 2 || owner.dayNo > 5) continue;
+      // Don't move the SharePoint reference off Day 1... (it's on d1, untouched)
+      await ctx.db.patch(l._id, { dayId: newIds[moves[owner.dayNo].dayNo] });
+      moved++;
+    }
+
+    const titles: Record<number, { title: string; summary: string }> = {
+      2: { title: "Day 2 — SDLC", summary: "System Integration & SDLC process: how software gets built." },
+      3: { title: "Day 3 — Basic Computer Concepts", summary: "Hardware/software, files, OS basics from Basic Computer Concept Material.pptx." },
+      4: { title: "Day 4 — Batch Jobs & Batch Processing", summary: "Job streams, batch vs online, trace Batch Processing Examples." },
+      5: { title: "Day 5 — Databases + Sort & Search", summary: "Database TIE session + Sort and Search deck. Week 1 quiz + retro." },
+    };
+    for (const [no, t] of Object.entries(titles)) {
+      const d = byNo.get(Number(no))!;
+      await ctx.db.patch(d._id, { title: t.title, summary: t.summary });
+    }
+    // Week-1 quiz stays on the last day of the week (dayNo 5) — no move needed.
+    return { alreadyFixed: false, moved };
   },
 });
 

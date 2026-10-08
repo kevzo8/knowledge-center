@@ -5,7 +5,7 @@ Simple auth (same pattern as rf-frozen-system) — admin creates trainee/trainer
 
 ## The 20-day flow (yes, I get you 👍)
 
-- **Week 1 — Foundations (Oct 5–9):** Day 1 intro/expectations/career paths + 3 required PDF readings → Day 2 basic computer → Day 3 batch jobs/processing → Day 4 DB + sort/search → Day 5 SDLC
+- **Week 1 — Foundations (Oct 5–9):** Day 1 intro/expectations/career paths + 3 required PDF readings → Day 2 SDLC → Day 3 basic computers → Day 4 batch jobs/processing → Day 5 DB + sort/search
 - **Week 2 — Logic → Java → War Card (Oct 12–16):** pseudocode/flowchart → Java intro/setup → Java fundamentals → OOP → **War Card v1: design + code**
 - **Week 3 — Panel + Deep Java (Oct 19–23):** panel/eval 1 on War Card (apply OOP) → collections/exceptions/IO → DRY/SOLID → concurrency → War Card v2 polish
 - **Week 4 — Solitaire capstone (Oct 26–30):** Klondike rules reusing Card/Deck → engine → enhanced (undo/scoring/polish) → testing/docs → final panel demo 🎓
@@ -37,10 +37,10 @@ npm run dev           # http://localhost:3000
 ## Source files → days
 
 - `p151-curriculum 1968.pdf`, `is course 1969.pdf`, `p363-ashenhurst IS 72.pdf` → Day 1 (required readings)
-- `Basic Computer Concept Material.pptx` → Day 2
-- `Batch Job Stream.pptx`, `Batch Processing Examples.pptx` → Day 3
-- `Database TIE session.pptx`, `Sort and Search.pptx` → Day 4
-- SDLC Google Slides + `System Integration and Software Development Process.pdf` → Day 5
+- `Basic Computer Concept Material.pptx` → Day 3
+- `Batch Job Stream.pptx`, `Batch Processing Examples.pptx` → Day 4
+- `Database TIE session.pptx`, `Sort and Search.pptx` → Day 5
+- SDLC Google Slides + `System Integration and Software Development Process.pdf` → Day 2
 - `Flowcharting.pptx`, `pseudocoding.pptx` → Day 6
 - `War_Card_Game_v4.docx` → Day 10 (v1), Day 11 (panel), Day 15 (v2)
 - `KLONDIKE Solitaire.doc` → Days 16–20 capstone
