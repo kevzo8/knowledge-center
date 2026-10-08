@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Roboto, Roboto_Slab, Roboto_Mono } from "next/font/google";
 import "./globals.css";
 import ConvexClientProvider from "../components/ConvexClientProvider";
+import ThemeToggle, { ThemeInitScript } from "../components/ThemeToggle";
 
 const roboto = Roboto({
   variable: "--font-roboto",
@@ -28,10 +29,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html
       lang="en"
+      suppressHydrationWarning
       className={`${roboto.variable} ${slab.variable} ${mono.variable}`}
     >
       <body className="min-h-screen antialiased">
+        <ThemeInitScript />
         <ConvexClientProvider>{children}</ConvexClientProvider>
+        <div className="fixed bottom-4 right-4 z-50">
+          <ThemeToggle />
+        </div>
       </body>
     </html>
   );

@@ -1,11 +1,25 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
-  --kc-ink: #232838;
+  --kc-ink: #243044;
   --kc-muted: #5b6478;
-  --kc-accent: #4f46e5;
-  --kc-accent-2: #7c3aed;
-  --kc-paper: #f7f5f0;
+  --kc-card: #ffffff;
+  --kc-line: #e4dccb;
+  --kc-input-bg: #fffdf8;
+  --kc-input-line: #d9d4c7;
+  color-scheme: light;
+}
+
+.dark {
+  --kc-ink: #e9edf5;
+  --kc-muted: #9aa4bb;
+  --kc-card: #161c2a;
+  --kc-line: #2a3247;
+  --kc-input-bg: #10151f;
+  --kc-input-line: #2e3650;
+  color-scheme: dark;
 }
 
 html {
@@ -15,11 +29,12 @@ html {
 body {
   font-family: var(--font-roboto), ui-sans-serif, system-ui, sans-serif;
   color: var(--kc-ink);
-  background: var(--kc-paper);
+  background: #f6f4ec;
   min-height: 100vh;
+  transition: background 0.3s ease, color 0.3s ease;
 }
 
-/* soft warm wash behind everything */
+/* pastel education wash */
 body::before {
   content: "";
   position: fixed;
@@ -27,10 +42,22 @@ body::before {
   z-index: -1;
   pointer-events: none;
   background:
-    radial-gradient(110% 70% at 12% 0%, rgba(99, 102, 241, 0.14), transparent 65%),
-    radial-gradient(110% 70% at 88% 8%, rgba(168, 85, 247, 0.12), transparent 65%),
-    radial-gradient(130% 90% at 50% 110%, rgba(251, 191, 36, 0.12), transparent 70%),
-    linear-gradient(180deg, #faf8f4 0%, #f7f5f0 45%, #f1ede4 100%);
+    radial-gradient(110% 70% at 10% 0%, rgba(125, 211, 252, 0.35), transparent 65%),
+    radial-gradient(110% 70% at 90% 6%, rgba(167, 243, 208, 0.35), transparent 65%),
+    radial-gradient(130% 90% at 50% 110%, rgba(253, 224, 171, 0.4), transparent 70%),
+    linear-gradient(180deg, #fbf9f4 0%, #f6f4ec 45%, #efe9da 100%);
+}
+
+.dark body {
+  background: #0e1320;
+}
+
+.dark body::before {
+  background:
+    radial-gradient(110% 70% at 10% 0%, rgba(14, 116, 144, 0.3), transparent 65%),
+    radial-gradient(110% 70% at 90% 6%, rgba(6, 95, 70, 0.32), transparent 65%),
+    radial-gradient(130% 90% at 50% 110%, rgba(146, 64, 14, 0.28), transparent 70%),
+    linear-gradient(180deg, #101625 0%, #0e1320 55%, #0b0f1a 100%);
 }
 
 h1, h2 {
@@ -47,49 +74,101 @@ code, pre, .font-mono {
 }
 
 ::selection {
-  background: rgba(99, 102, 241, 0.25);
+  background: rgba(56, 189, 248, 0.35);
 }
 
-/* headline gradient text */
+/* education gradient headline: blue → violet → orange */
 .text-gradient {
-  background: linear-gradient(100deg, #4338ca 10%, #7c3aed 45%, #db2777 90%);
+  background: linear-gradient(100deg, #2563eb 5%, #7c3aed 50%, #f59e0b 95%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
 }
 
-/* nicer cards */
+/* cards lift */
 .card-lift {
   transition: transform 0.15s ease, box-shadow 0.2s ease;
 }
 .card-lift:hover {
   transform: translateY(-2px);
-  box-shadow: 0 12px 32px rgba(67, 56, 202, 0.14);
+  box-shadow: 0 12px 32px rgba(37, 99, 235, 0.16);
+}
+.dark .card-lift:hover {
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
 }
 
 /* friendlier form controls */
 input:not([type="checkbox"]):not([type="radio"]),
 select,
 textarea {
-  border-color: #d9d4c7 !important;
-  background: #fffdf9 !important;
+  border-color: var(--kc-input-line) !important;
+  background: var(--kc-input-bg) !important;
   color: var(--kc-ink) !important;
 }
 input:focus, select:focus, textarea:focus {
-  border-color: var(--kc-accent) !important;
+  border-color: #38bdf8 !important;
 }
 
-/* primary buttons: gradient instead of flat black */
+/* primary buttons: blue → violet gradient */
 .btn-primary {
-  background: linear-gradient(100deg, #4338ca, #7c3aed);
+  background: linear-gradient(100deg, #2563eb, #7c3aed);
   color: #fff !important;
-  box-shadow: 0 8px 20px rgba(99, 102, 241, 0.35);
+  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.35);
   transition: transform 0.12s ease, box-shadow 0.2s ease, filter 0.15s ease;
 }
 .btn-primary:hover {
-  filter: brightness(1.07);
-  box-shadow: 0 10px 26px rgba(99, 102, 241, 0.45);
+  filter: brightness(1.08);
+  box-shadow: 0 10px 26px rgba(37, 99, 235, 0.45);
 }
 .btn-primary:active {
   transform: scale(0.98);
+}
+
+/* ---------- dark-mode remaps for hardcoded light classes ---------- */
+.dark .bg-white {
+  background-color: var(--kc-card) !important;
+}
+.dark .bg-slate-50 {
+  background-color: #1d2434 !important;
+}
+.dark .bg-slate-100 {
+  background-color: #242c42 !important;
+}
+.dark .text-slate-600 {
+  color: #aab3c5 !important;
+}
+.dark .text-slate-500 {
+  color: #8b94a9 !important;
+}
+.dark .text-slate-400 {
+  color: #6f7891 !important;
+}
+.dark .text-slate-700 {
+  color: #c3cadb !important;
+}
+.dark .text-indigo-600,
+.dark .text-indigo-700 {
+  color: #a5b4fc !important;
+}
+.dark .text-emerald-700 {
+  color: #6ee7b7 !important;
+}
+.dark .text-red-600 {
+  color: #fca5a5 !important;
+}
+.dark .border-slate-200,
+.dark .border-slate-300 {
+  border-color: var(--kc-line) !important;
+}
+.dark .bg-indigo-50 {
+  background-color: rgba(79, 70, 229, 0.18) !important;
+}
+.dark .border-indigo-300 {
+  border-color: rgba(129, 140, 248, 0.5) !important;
+}
+.dark .bg-emerald-50 {
+  background-color: rgba(16, 185, 129, 0.14) !important;
+}
+.dark .border-emerald-200 {
+  border-color: rgba(52, 211, 153, 0.4) !important;
 }

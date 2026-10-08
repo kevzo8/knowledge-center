@@ -65,13 +65,13 @@ export default function Dashboard() {
       {stats && (
         <section className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-5">
           {[
-            ["Level", stats.level],
-            ["XP", stats.xp],
-            ["Lectures", stats.lecturesDone],
-            ["Activities", stats.activitiesDone],
-            ["Quizzes", stats.quizzesTaken],
-          ].map(([k, v]) => (
-            <div key={k as string} className="rounded-2xl border bg-white p-3 text-center">
+            ["Level", stats.level, "bg-sky-100/70 dark:bg-sky-950/50"],
+            ["XP", stats.xp, "bg-amber-100/70 dark:bg-amber-950/50"],
+            ["Lectures", stats.lecturesDone, "bg-emerald-100/70 dark:bg-emerald-950/50"],
+            ["Activities", stats.activitiesDone, "bg-orange-100/70 dark:bg-orange-950/50"],
+            ["Quizzes", stats.quizzesTaken, "bg-violet-100/70 dark:bg-violet-950/50"],
+          ].map(([k, v, tint]) => (
+            <div key={k as string} className={`rounded-2xl border p-3 text-center ${tint as string}`}>
               <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500">{k}</p>
               <p className="text-2xl font-black">{String(v)}</p>
             </div>
