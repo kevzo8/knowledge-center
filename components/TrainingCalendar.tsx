@@ -63,9 +63,9 @@ export default function TrainingCalendar({ days }: { days: CalDay[] | undefined 
   }, [days]);
 
   const cells = useMemo(() => {
-    // Monday-first grid
+    // Sunday-first grid
     const first = new Date(view.y, view.m, 1);
-    const lead = (first.getDay() + 6) % 7;
+    const lead = first.getDay(); // 0 = Sunday
     const dim = new Date(view.y, view.m + 1, 0).getDate();
     const out: { y: number; m: number; d: number; inMonth: boolean }[] = [];
     for (let i = 0; i < lead; i++) {
@@ -111,7 +111,7 @@ export default function TrainingCalendar({ days }: { days: CalDay[] | undefined 
       </div>
 
       <div className="mt-2 grid grid-cols-7 gap-1 text-center text-[10px] font-bold uppercase tracking-wider text-slate-400 sm:gap-1.5 sm:text-xs">
-        {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => (
+        {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
           <div key={d} className="py-1">{d}</div>
         ))}
       </div>
@@ -120,13 +120,17 @@ export default function TrainingCalendar({ days }: { days: CalDay[] | undefined 
         {cells.map((c) => {
           const t = byDate.get(keyOf(c.y, c.m, c.d));
           const isToday = keyOf(c.y, c.m, c.d) === todayKey;
+          const wd = new Date(c.y, c.m, c.d).getDay();
+          const isWeekend = wd === 0 || wd === 6;
           const st = t?.week ? WEEK_STYLE[t.week] : undefined;
           if (!t) {
             return (
               <div
                 key={`${c.y}-${c.m}-${c.d}`}
-                className={`min-h-[56px] rounded-xl px-1.5 py-1.5 text-sm sm:min-h-[110px] sm:text-base ${
-                  c.inMonth ? "text-slate-400" : "text-slate-300"
+                className={`min-h-[56px] rounded-xl border px-1.5 py-1.5 text-sm sm:min-h-[110px] sm:text-base ${
+                  isWeekend
+                    ? "border-slate-200 bg-slate-100 text-slate-300"
+                    : `border-slate-300 bg-white ${c.inMonth ? "text-slate-400" : "text-slate-300"}`
                 } ${isToday ? "ring-2 ring-slate-400" : ""}`}
               >
                 {c.d}
