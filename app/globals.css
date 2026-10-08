@@ -38,6 +38,10 @@ h1, h2 {
   letter-spacing: -0.01em;
 }
 
+.font-display {
+  font-family: var(--font-slab), Georgia, serif;
+}
+
 code, pre, .font-mono {
   font-family: var(--font-robomon), ui-monospace, monospace !important;
 }

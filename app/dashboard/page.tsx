@@ -5,6 +5,7 @@ import { useMe } from "../../lib/useMe";
 import { clearToken } from "../../lib/auth-token";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import TrainingCalendar from "../../components/TrainingCalendar";
 
 export default function Dashboard() {
   const { token, me, loading } = useMe();
@@ -80,29 +81,9 @@ export default function Dashboard() {
 
       <section className="mt-6 grid gap-4 lg:grid-cols-[1.5fr_1fr]">
         <div>
-          <h2 className="text-sm font-bold uppercase tracking-widest">Training days (Oct 5–30)</h2>
-          <div className="mt-2 space-y-2">
-            {days?.map((d) => (
-              <Link
-                key={d._id}
-                href={`/learn/${d._id}`}
-                className="block rounded-2xl border bg-white p-4 hover:shadow"
-              >
-                <p className="text-xs font-bold text-indigo-600">
-                  DAY {d.dayNo}
-                  {d.week ? ` • WEEK ${d.week}` : ""}
-                  {d.date ? ` • ${d.date}` : ""}
-                </p>
-                <p className="font-bold">{d.title}</p>
-                {d.summary && <p className="mt-1 text-sm text-slate-600">{d.summary}</p>}
-              </Link>
-            ))}
-            {!days && <p className="text-sm text-slate-500">Loading days… (run seed if empty)</p>}
-            {days && days.length === 0 && (
-              <p className="text-sm text-slate-500">
-                No days yet — run <code>seed:seedAll</code> in the Convex dashboard.
-              </p>
-            )}
+          <h2 className="text-sm font-bold uppercase tracking-widest">Training calendar — tap a day to open it</h2>
+          <div className="mt-2">
+            <TrainingCalendar days={days as any} />
           </div>
         </div>
         <div>
