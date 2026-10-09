@@ -171,7 +171,7 @@ export default function OverviewCharts({ rows, panels }: { rows: OverviewRow[]; 
           {grouped.length === 0 ? (
             <p className="mt-2 text-sm text-slate-500">No trainees.</p>
           ) : (
-            <svg viewBox={`0 0 ${GW} ${GH}`} className="mt-2 w-full" role="img" aria-label="Quiz vs panel averages">
+            <svg viewBox={`0 0 ${GW} ${GH}`} className="mx-auto mt-2 w-full max-w-xl" role="img" aria-label="Quiz vs panel averages">
               {[0, 25, 50, 75, 100].map((v) => (
                 <g key={v}>
                   <line x1="28" x2={GW - 4} y1={14 + (1 - v / 100) * BH} y2={14 + (1 - v / 100) * BH} stroke="currentColor" strokeOpacity="0.12" />
@@ -206,7 +206,7 @@ export default function OverviewCharts({ rows, panels }: { rows: OverviewRow[]; 
           {validPanels.length === 0 ? (
             <p className="mt-2 text-sm text-slate-500">No panels graded yet — grade Panel 1 in the Grading tab.</p>
           ) : (
-            <svg viewBox={`0 0 ${TW} ${TH}`} className="mt-2 w-full" role="img" aria-label="Panel averages trend">
+            <svg viewBox={`0 0 ${TW} ${TH}`} className="mx-auto mt-2 w-full max-w-2xl" role="img" aria-label="Panel averages trend">
               {[0, 25, 50, 75, 100].map((v) => (
                 <g key={v}>
                   <line x1="28" x2={TW - 8} y1={yFor(v)} y2={yFor(v)} stroke="currentColor" strokeOpacity="0.12" />
