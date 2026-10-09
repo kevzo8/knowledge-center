@@ -3,6 +3,7 @@ import { useMutation, useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { useMe } from "../../lib/useMe";
 import { useState } from "react";
+import Link from "next/link";
 import ThemeToggle from "../../components/ThemeToggle";
 import { Check, ChevronDown, ChevronRight, ExternalLink, Paperclip, RefreshCw, Upload } from "lucide-react";
 import OverviewCharts from "../../components/OverviewCharts";
@@ -24,6 +25,13 @@ export default function Admin() {
   return (
     <main className="mx-auto max-w-5xl px-5 py-8">
       <div className="flex items-center gap-3">
+        <Link href="/" title="Home">
+          <img
+            src="/svi_logo.png"
+            alt="SVI home"
+            className="h-11 w-11 shrink-0 rounded-2xl bg-white object-contain p-1 shadow-md transition hover:scale-105"
+          />
+        </Link>
         <h1 className="text-2xl font-black">Admin <span className="text-sm font-normal text-slate-500">({me.displayName} • {me.role})</span></h1>
         <div className="ml-auto flex items-center gap-2">
           <ThemeToggle />

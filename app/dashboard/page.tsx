@@ -36,12 +36,18 @@ export default function Dashboard() {
   return (
     <main className="mx-auto max-w-6xl px-5 py-8">
       <header className="flex items-center gap-3">
-        <div>
-          <p className="text-xs font-bold uppercase tracking-[0.3em] text-indigo-600">
-            SVI Knowledge Center
-          </p>
-          <h1 className="text-2xl font-black">
-            Hi, {user.displayName}
+        <Link href="/" className="flex min-w-0 items-center gap-2.5">
+          <img
+            src="/svi_logo.png"
+            alt="SVI home"
+            className="h-11 w-11 shrink-0 rounded-2xl bg-white object-contain p-1 shadow-md"
+          />
+          <div className="min-w-0">
+            <p className="text-xs font-bold uppercase tracking-[0.3em] text-indigo-600">
+              SVI Knowledge Center
+            </p>
+            <h1 className="truncate text-2xl font-black">
+              Hi, {user.displayName}
             <span
               className={`ml-2 rounded-full px-2 py-0.5 align-middle text-[11px] font-bold uppercase text-white ${
                 user.role === "admin"
@@ -54,17 +60,13 @@ export default function Dashboard() {
               {user.role}
             </span>
           </h1>
-        </div>
+          </div>
+        </Link>
         <div className="ml-auto flex items-center gap-2">
           <ThemeToggle />
           <Link href="/settings" className="inline-flex items-center gap-1 rounded-full border px-4 py-2 text-sm font-bold">
             <Settings size={14} /> Settings
           </Link>
-          {(user.role === "admin" || user.role === "trainer") && (
-            <Link href="/admin" className="rounded-full border px-4 py-2 text-sm font-bold">
-              Admin
-            </Link>
-          )}
           <button
             onClick={() => {
               clearToken();

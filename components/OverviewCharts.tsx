@@ -66,16 +66,9 @@ export default function OverviewCharts({ rows, panels }: { rows: OverviewRow[]; 
 
   // grouped bars (quiz vs panel avg), top 6
   const grouped = top.slice(0, 6);
-  const GW = grouped.length * 64 + 30;
-  const GH = 175;
-  const BH = 118;
 
-  // trend line across panels
-  const TW = 560;
-  const TH = 170;
-  const yFor = (p: number) => 20 + (1 - p / 100) * 110;
-  const xFor = (i: number, n: number) => (n === 1 ? TW / 2 : 30 + (i / (n - 1)) * (TW - 60));
-  const validPanels = panels.map((p, i) => ({ ...p, i })).filter((p) => p.avg !== null);
+  // trend steps across panels (newest data model: panels with avg or null)
+  const trendPanels = panels;
 
   return (
     <div className="space-y-2">
@@ -171,67 +164,69 @@ export default function OverviewCharts({ rows, panels }: { rows: OverviewRow[]; 
           {grouped.length === 0 ? (
             <p className="mt-2 text-sm text-slate-500">No trainees.</p>
           ) : (
-            <svg viewBox={`0 0 ${GW} ${GH}`} className="mx-auto mt-2 w-full max-w-xl" role="img" aria-label="Quiz vs panel averages">
-              {[0, 25, 50, 75, 100].map((v) => (
-                <g key={v}>
-                  <line x1="28" x2={GW - 4} y1={14 + (1 - v / 100) * BH} y2={14 + (1 - v / 100) * BH} stroke="currentColor" strokeOpacity="0.12" />
-                  <text x="2" y={17 + (1 - v / 100) * BH} fontSize="9" className="fill-slate-500">{v}</text>
-                </g>
+            <div className="mt-2 space-y-2.5">
+              {grouped.map((r) => (
+                <div key={r.username}>
+                  <p className="truncate text-xs font-bold">{r.displayName}</p>
+                  {(
+                    [
+                      ["Quiz", r.quizAvg, "bg-violet-500"],
+                      ["Panel", r.evalAvg, "bg-emerald-500"],
+                    ] as const
+                  ).map(([label, val, bar]) => (
+                    <div key={label} className="mt-1 flex items-center gap-2">
+                      <span className="w-11 shrink-0 text-[10px] font-bold uppercase text-slate-500">{label}</span>
+                      <div className="h-2.5 min-w-0 flex-1 overflow-hidden rounded-full bg-slate-100">
+                        <div
+                          className={`h-full rounded-full ${bar}`}
+                          style={{ width: `${val ?? 0}%`, opacity: val === null ? 0.25 : 1 }}
+                        />
+                      </div>
+                      <span className="w-10 shrink-0 text-right font-mono text-[11px]">
+                        {val !== null ? `${val}%` : "—"}
+                      </span>
+                    </div>
+                  ))}
+                </div>
               ))}
-              {grouped.map((r, i) => {
-                const x = 34 + i * 64;
-                const q = r.quizAvg ?? 0;
-                const e = r.evalAvg ?? 0;
-                return (
-                  <g key={r.username}>
-                    <rect x={x} y={14 + (1 - q / 100) * BH} width="16" height={(q / 100) * BH} rx="4" fill="#8b5cf6" opacity={r.quizAvg === null ? 0.25 : 1} />
-                    <rect x={x + 20} y={14 + (1 - e / 100) * BH} width="16" height={(e / 100) * BH} rx="4" fill="#10b981" opacity={r.evalAvg === null ? 0.25 : 1} />
-                    <text x={x + 18} y={GH - 6} textAnchor="middle" fontSize="9.5" fontWeight="700" className="fill-slate-600 dark:fill-slate-300">
-                      {r.displayName.split(" ")[0].slice(0, 9)}
-                    </text>
-                  </g>
-                );
-              })}
-            </svg>
+            </div>
           )}
-          <p className="mt-1 flex gap-3 text-[11px] text-slate-500">
-            <span className="inline-flex items-center gap-1"><span className="h-2.5 w-2.5 rounded bg-violet-500" /> Quiz</span>
-            <span className="inline-flex items-center gap-1"><span className="h-2.5 w-2.5 rounded bg-emerald-500" /> Panel</span>
-            <span>faded = not taken yet</span>
-          </p>
+          <p className="mt-2 text-[11px] text-slate-500">Faded bar = not taken / not graded yet.</p>
         </div>
 
         <div className="rounded-2xl border bg-white p-4">
-          <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Cohort panel trend</p>
-          {validPanels.length === 0 ? (
-            <p className="mt-2 text-sm text-slate-500">No panels graded yet — grade Panel 1 in the Grading tab.</p>
+          <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Cohort panel journey</p>
+          {trendPanels.length === 0 ? (
+            <p className="mt-2 text-sm text-slate-500">No evaluations yet.</p>
           ) : (
-            <svg viewBox={`0 0 ${TW} ${TH}`} className="mx-auto mt-2 w-full max-w-2xl" role="img" aria-label="Panel averages trend">
-              {[0, 25, 50, 75, 100].map((v) => (
-                <g key={v}>
-                  <line x1="28" x2={TW - 8} y1={yFor(v)} y2={yFor(v)} stroke="currentColor" strokeOpacity="0.12" />
-                  <text x="2" y={yFor(v) + 3} fontSize="9" className="fill-slate-500">{v}</text>
-                </g>
+            <div className="mt-2">
+              {trendPanels.map((p, i) => (
+                <div key={p.evaluationId} className="flex gap-3">
+                  <div className="flex flex-col items-center">
+                    <span
+                      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-black text-white ${
+                        p.avg === null
+                          ? "bg-slate-300 dark:bg-slate-600"
+                          : p.avg >= 80
+                            ? "bg-emerald-500"
+                            : p.avg >= 60
+                              ? "bg-amber-500"
+                              : "bg-red-400"
+                      }`}
+                    >
+                      {p.avg !== null ? `${p.avg}` : "–"}
+                    </span>
+                    {i < trendPanels.length - 1 && <span className="w-0.5 flex-1 bg-orange-200 dark:bg-orange-900" />}
+                  </div>
+                  <div className={i < trendPanels.length - 1 ? "pb-4" : ""}>
+                    <p className="text-sm font-bold">{p.title}</p>
+                    <p className="text-xs text-slate-500">
+                      {p.avg !== null ? `cohort average ${p.avg}% • ` : "not graded yet • "}{p.graded} graded
+                    </p>
+                  </div>
+                </div>
               ))}
-              {validPanels.map((p, k) => {
-                const x = xFor(p.i, panels.length);
-                const y = yFor(p.avg!);
-                const nx = validPanels[k + 1] ? xFor(validPanels[k + 1].i, panels.length) : null;
-                const ny = validPanels[k + 1] ? yFor(validPanels[k + 1].avg!) : null;
-                return (
-                  <g key={p.evaluationId}>
-                    {nx !== null && <line x1={x} y1={y} x2={nx} y2={ny!} stroke="#f59e0b" strokeWidth="2.5" />}
-                    <circle cx={x} cy={y} r="5" fill="#f59e0b" stroke="#fff" strokeWidth="2" />
-                    <text x={x} y={y - 10} textAnchor="middle" fontSize="11" fontWeight="800" className="fill-slate-700 dark:fill-slate-200">
-                      {p.avg}%
-                    </text>
-                    <text x={x} y={TH - 4} textAnchor="middle" fontSize="9.5" fontWeight="600" className="fill-slate-500">
-                      {p.title.replace(/^Panel \d+: /, "").replace(/ demo$/, "").slice(0, 18)} ({p.graded})
-                    </text>
-                  </g>
-                );
-              })}
-            </svg>
+            </div>
           )}
         </div>
       </div>
