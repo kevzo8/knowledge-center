@@ -128,6 +128,29 @@ export const upsertQuestion = mutation({
   },
 });
 
+export const deleteQuestion = mutation({
+  args: { token: v.string(), questionId: v.id("questions") },
+  handler: async (ctx, args) => {
+    await requireStaff(ctx, args.token);
+    await ctx.db.delete(args.questionId);
+    return true;
+  },
+});
+
+export const deleteQuiz = mutation({
+  args: { token: v.string(), quizId: v.id("quizzes") },
+  handler: async (ctx, args) => {
+    await requireStaff(ctx, args.token);
+    const qs = await ctx.db
+      .query("questions")
+      .withIndex("by_quiz", (q) => q.eq("quizId", args.quizId))
+      .collect();
+    for (const q of qs) await ctx.db.delete(q._id);
+    await ctx.db.delete(args.quizId);
+    return true;
+  },
+});
+
 // ---------- Attempts + XP ----------
 export const submitQuiz = mutation({
   args: {
