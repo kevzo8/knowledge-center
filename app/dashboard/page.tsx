@@ -7,7 +7,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import ProgressSection from "../../components/ProgressSection";
 import ThemeToggle from "../../components/ThemeToggle";
-import { CalendarDays, Trophy } from "lucide-react";
+import { CalendarDays, Settings, Trophy } from "lucide-react";
 
 export default function Dashboard() {
   const { token, me, loading } = useMe();
@@ -47,6 +47,9 @@ export default function Dashboard() {
         </div>
         <div className="ml-auto flex items-center gap-2">
           <ThemeToggle />
+          <Link href="/settings" className="inline-flex items-center gap-1 rounded-full border px-4 py-2 text-sm font-bold">
+            <Settings size={14} /> Settings
+          </Link>
           {(user.role === "admin" || user.role === "trainer") && (
             <Link href="/admin" className="rounded-full border px-4 py-2 text-sm font-bold">
               Admin

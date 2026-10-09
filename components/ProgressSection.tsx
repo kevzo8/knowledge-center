@@ -2,7 +2,7 @@
 import { useQuery } from "convex/react";
 import { api } from "../convex/_generated/api";
 import { useMemo } from "react";
-import { BarChart3 } from "lucide-react";
+import { BarChart3, Swords } from "lucide-react";
 
 function gradeFor(avg: number | null) {
   if (avg === null) return { g: "—", label: "Take a quiz to earn a grade" };
@@ -61,6 +61,23 @@ export default function ProgressSection({
     : null;
   const grade = gradeFor(avg);
   const rank = board?.findIndex((r) => r.username === username) ?? -1;
+
+  const versus = useMemo(() => {
+    if (!board || board.length === 0) return { rows: [], max: 1, avg: 0 };
+    const rows = board.slice(0, 5).map((r) => ({ ...r, me: r.username === username }));
+    if (!rows.some((r) => r.me)) {
+      rows.push({
+        username,
+        displayName: `${username} (you)`,
+        xp: stats?.xp ?? 0,
+        level: stats?.level ?? 1,
+        me: true,
+      });
+    }
+    const max = Math.max(...rows.map((r) => r.xp), 1);
+    const avgXp = Math.round(board.reduce((s: number, r: any) => s + r.xp, 0) / board.length);
+    return { rows, max, avg: avgXp };
+  }, [board, username, stats]);
 
   const W = 600;
   const H = 150;
@@ -158,6 +175,46 @@ export default function ProgressSection({
             </div>
           )}
         </div>
+      </div>
+
+      <div className="mt-2 rounded-2xl border bg-white p-4">
+        <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-slate-500">
+          <Swords size={14} /> You vs the pack — XP race
+        </p>
+        {versus.rows.length === 0 ? (
+          <p className="mt-2 text-sm text-slate-500">No trainees on the board yet.</p>
+        ) : (
+          <div className="mt-2 space-y-2">
+            {versus.rows.map((r) => (
+              <div key={r.username}>
+                <div className="flex items-baseline justify-between gap-2 text-xs">
+                  <span className={`truncate font-bold ${r.me ? "text-sky-600 dark:text-sky-300" : ""}`}>
+                    {r.me ? `${r.displayName} (you)` : r.displayName}
+                  </span>
+                  <span className="font-mono">{r.xp} XP</span>
+                </div>
+                <div className="relative mt-0.5 h-3 overflow-hidden rounded-full bg-slate-100">
+                  <div
+                    className={`h-full rounded-full ${
+                      r.me
+                        ? "bg-gradient-to-r from-sky-500 to-violet-500"
+                        : "bg-gradient-to-r from-slate-400 to-slate-300 dark:from-slate-600 dark:to-slate-500"
+                    }`}
+                    style={{ width: `${Math.max(2, Math.round((r.xp / versus.max) * 100))}%` }}
+                  />
+                  <div
+                    className="absolute top-0 h-full border-l-2 border-dashed border-orange-400"
+                    style={{ left: `${Math.min(100, Math.round((versus.avg / versus.max) * 100))}%` }}
+                    title={`Pack average: ${versus.avg} XP`}
+                  />
+                </div>
+              </div>
+            ))}
+            <p className="text-[11px] text-slate-500">
+              Dashed line = pack average ({versus.avg} XP). Top 5 shown{versus.rows.some((r) => r.me && !board?.slice(0, 5).some((b) => b.username === r.username)) ? " + you" : ""}.
+            </p>
+          </div>
+        )}
       </div>
     </section>
   );
