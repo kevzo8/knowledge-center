@@ -153,7 +153,7 @@ export default function TrainingCalendar({
                   isWeekend
                     ? "border-slate-200 bg-slate-100 text-slate-300"
                     : `border-slate-300 bg-white ${c.inMonth ? "text-slate-400" : "text-slate-300"}`
-                } ${isToday ? "ring-2 ring-slate-400" : ""}`}
+                } ${isToday ? "ring-[3px] ring-sky-500" : ""}`}
               >
                 {c.d}
               </div>
@@ -165,7 +165,7 @@ export default function TrainingCalendar({
               onClick={() => router.push(redirectTo ?? `/learn/${t._id}`)}
               title={redirectTo ? `${t.title} (log in to open)` : t.title}
               className={`card-lift min-h-[56px] rounded-xl border px-1.5 py-1.5 text-left sm:min-h-[110px] ${st?.cell ?? "bg-slate-50"} ${
-                isToday ? "ring-2 ring-slate-900" : ""
+                isToday ? "ring-[3px] ring-sky-500" : ""
               }`}
             >
               <span className="flex items-center gap-1">
