@@ -230,7 +230,7 @@ function MyPanelGrades({ token }: { token: string }) {
   return (
     <div className="mt-2 rounded-2xl border bg-white p-4">
       <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-slate-500">
-        <Award size={14} /> My panel grades
+        <Award size={14} /> My grades
       </p>
       <div className="mt-2 space-y-1.5">
         {grades.map((g, i) => (
@@ -251,7 +251,7 @@ function MyPanelGrades({ token }: { token: string }) {
                     <span className="shrink-0 font-mono">{it.score}/{it.maxScore}</span>
                   </div>
                 ))}
-                <p className="text-slate-500">Graded by {g.gradedBy} • worth {g.points} XP pool</p>
+                <p className="text-slate-500">Graded by {g.panel} • worth {g.points} XP pool</p>
               </div>
             )}
           </div>

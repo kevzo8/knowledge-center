@@ -806,7 +806,7 @@ function TraineeRow({ token, row, isAdmin }: { token: string; row: any; isAdmin:
               </div>
             ))}
           </div>
-          <p className="mt-2 text-[11px] font-bold uppercase tracking-widest text-slate-500">Panel grades</p>
+          <p className="mt-2 text-[11px] font-bold uppercase tracking-widest text-slate-500">Grades</p>
           {!grades && <p className="text-xs text-slate-500">Loading…</p>}
           {grades?.length === 0 && <p className="text-xs text-slate-500">Not graded yet — grade in the Grading tab.</p>}
           {grades?.map((g, i) => (
@@ -885,10 +885,12 @@ function GradingPanel({ token, meUsername }: { token: string; meUsername: string
   return (
     <section className="space-y-4">
       <div className="rounded-2xl border bg-white p-4 text-sm text-slate-600">
-        An <b>evaluation</b> is one thing you score — a panel demo, a proposal, an activity.
+        An <b>evaluation</b> is one thing you score — a game demo, a proposal, or an activity.
         It uses a <b>rubric</b> (the score sheet: categories → criteria → max scores) plus an <b>XP pool</b> —
         85% on a 100-XP pool earns 85 XP. Re-grading replaces the old XP.<br />
-        <b>Rubrics are reusable templates:</b> right now Panel 1 (War Card) and the Final panel (Solitaire)
+        The trainers scoring one trainee form its <b>panel</b> — each keeps their own ballot, the trainee
+        earns the average and only ever sees them as Panel 1, Panel 2, …<br />
+        <b>Rubrics are reusable templates:</b> right now the War Card demo and the Solitaire demo
         share the same “War Card & Solitaire” sheet — make a rubric once, attach it to many evaluations.
       </div>
       <EvalBuilder token={token} rubrics={rubrics} days={days} activities={activities} evals={evals} />
@@ -1032,7 +1034,7 @@ function EvalBuilder({ token, rubrics, days, activities, evals }: { token: strin
           </button>
         </div>
         <p className="mt-1 text-xs text-slate-500">
-          An evaluation is one thing you score — a panel, a proposal, an activity.
+          An evaluation is one thing you score — a game demo, a proposal, an activity.
           It borrows a sheet above and sets an XP pool: 85% of 100 = 85 XP.
         </p>
         <div className="mt-2 space-y-1.5">

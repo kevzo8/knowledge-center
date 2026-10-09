@@ -34,7 +34,7 @@ export const seedAll = mutation({
       { dayNo: 9, week: 2, date: "Oct 15 Thu", title: "Day 9 — OOP Essentials", summary: "Classes/objects, encapsulation, inheritance, polymorphism — applied to cards (Card, Deck, Player)." },
       { dayNo: 10, week: 2, date: "Oct 16 Fri", title: "Day 10 — War Card Game: design + code v1", summary: "Read War_Card_Game_v4.docx, design classes, code a playable War round. Demo + peer review." },
       // Week 3 — Panel + deeper Java
-      { dayNo: 11, week: 3, date: "Oct 19 Mon", title: "Day 11 — Panel / Evaluation 1: War Card demo", summary: "Panel grills War Card v1: apply OOP concepts, defend design decisions. Pass/refactor list." },
+      { dayNo: 11, week: 3, date: "Oct 19 Mon", title: "Day 11 — Evaluation 1: War Card game demo", summary: "Panel grills War Card v1: apply OOP concepts, defend design decisions. Pass/refactor list." },
       { dayNo: 12, week: 3, date: "Oct 20 Tue", title: "Day 12 — Collections, Exceptions & File I/O", summary: "List/Map/Set, try/catch, reading/writing files — refactor War Card to use them." },
       { dayNo: 13, week: 3, date: "Oct 21 Wed", title: "Day 13 — Clean Code: DRY & SOLID", summary: "DRY, SOLID, small methods, naming. Refactor War Card smells live." },
       { dayNo: 14, week: 3, date: "Oct 22 Thu", title: "Day 14 — Concurrency Basics", summary: "Threads, Runnable, Executor, race conditions — e.g. parallel simulations / timers." },
@@ -44,7 +44,7 @@ export const seedAll = mutation({
       { dayNo: 17, week: 4, date: "Oct 27 Tue", title: "Day 17 — Solitaire build: game state + moves", summary: "Implement tableau/foundation/stock/waste + legal-move engine." },
       { dayNo: 18, week: 4, date: "Oct 28 Wed", title: "Day 18 — Solitaire enhanced: undo, scoring, polish", summary: "Undo, scoring, hints, input validation — the 'enhanced from War Card' output." },
       { dayNo: 19, week: 4, date: "Oct 29 Thu", title: "Day 19 — Testing, edge cases & docs", summary: "Edge cases (empty piles, invalid moves), test plan, README/how-to-play." },
-      { dayNo: 20, week: 4, date: "Oct 30 Fri", title: "Day 20 — Final panel, demo & graduation", summary: "Solitaire demo to panel, evaluation, next steps. 🎓" },
+      { dayNo: 20, week: 4, date: "Oct 30 Fri", title: "Day 20 — Final demos & graduation", summary: "Solitaire demo to panel, evaluation, next steps. 🎓" },
     ];
 
     const dayIds = [];
@@ -87,8 +87,8 @@ export const seedAll = mutation({
       // Day 16
       { dayId: d16, title: "KLONDIKE Solitaire (rules doc)", kind: "doc", fileName: "KLONDIKE Solitaire.doc", notes: "Capstone reference — enhanced from War Card.", order: 1 },
       // Day 11/15/19/20 need no fixed lecture — panels/demos
-      { dayId: d11, title: "Panel 1 briefing (trainer adds rubric)", kind: "link", notes: "Add evaluation rubric link.", order: 1 },
-      { dayId: d20, title: "Final panel briefing (trainer adds rubric)", kind: "link", notes: "Add final demo criteria.", order: 1 },
+      { dayId: d11, title: "Demo briefing (trainer adds rubric)", kind: "link", notes: "Add evaluation rubric link.", order: 1 },
+      { dayId: d20, title: "Final demo briefing (trainer adds rubric)", kind: "link", notes: "Add final demo criteria.", order: 1 },
     ];
     for (const l of lectures) await ctx.db.insert("lectures", l);
 
@@ -231,16 +231,16 @@ export const seedGrading = mutation({
     });
 
     await ctx.db.insert("evaluations", {
-      title: "Panel 1: War Card demo",
-      description: "Day 11 panel — demo War Card v1, defend OOP design decisions.",
+      title: "War Card game demo",
+      description: "Day 11 trainer-graded demo — show War Card v1, defend OOP design decisions.",
       dayId: dayId(11),
       rubricId: warRubric,
       points: 100,
       active: true,
     });
     await ctx.db.insert("evaluations", {
-      title: "Final Panel: Solitaire demo",
-      description: "Day 20 panel — demo enhanced Solitaire + Q&A.",
+      title: "Solitaire demo",
+      description: "Day 20 trainer-graded demo — enhanced Solitaire + Q&A.",
       dayId: dayId(20),
       rubricId: warRubric,
       points: 100,

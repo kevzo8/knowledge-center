@@ -43,7 +43,7 @@ export default function StaffOverview({ token }: { token: string }) {
                     <th className="pr-3">Lv</th>
                     <th className="pr-3">Total XP</th>
                     <th className="pr-3">Quiz avg</th>
-                    <th className="pr-3">Panel avg</th>
+                    <th className="pr-3">Graded avg</th>
                     <th>Grade</th>
                   </tr>
                 </thead>

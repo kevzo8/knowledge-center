@@ -195,7 +195,7 @@ export default function OverviewCharts({ rows, panels }: { rows: OverviewRow[]; 
         </div>
 
         <div className="rounded-2xl border bg-white p-4">
-          <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Cohort panel journey</p>
+          <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Cohort grading journey</p>
           {trendPanels.length === 0 ? (
             <p className="mt-2 text-sm text-slate-500">No evaluations yet.</p>
           ) : (

@@ -369,7 +369,12 @@ export const myGrades = query({
       .withIndex("by_user", (q) => q.eq("userId", u._id))
       .collect();
     const out = [];
-    for (const g of grades.sort((a, b) => b.createdAt - a.createdAt)) {
+    const sorted = grades.sort((a, b) => a.createdAt - b.createdAt);
+    const counters = new Map<string, number>();
+    for (const g of sorted) {
+      const key = String(g.evaluationId);
+      const n = (counters.get(key) ?? 0) + 1;
+      counters.set(key, n);
       const evaluation = await ctx.db.get(g.evaluationId);
       const rubric = evaluation ? await ctx.db.get(evaluation.rubricId) : null;
       out.push({
@@ -378,9 +383,11 @@ export const myGrades = query({
         dayId: evaluation?.dayId ? String(evaluation.dayId) : null,
         points: evaluation?.points ?? 0,
         percent: g.percent,
-        gradedBy: g.gradedBy,
+        // Anonymous to trainees: Panel 1, Panel 2… in grading order (per evaluation).
+        // Staff see real names via gradesForEvaluation / gradesForTrainee.
+        panel: `Panel ${n}`,
         at: g.createdAt,
-        items: (rubric?.items ?? []).map((it, i) => ({ ...it, score: g.scores[i] ?? 0 })),
+        items: (rubric?.items ?? []).map((it, j) => ({ ...it, score: g.scores[j] ?? 0 })),
       });
     }
     return out;
