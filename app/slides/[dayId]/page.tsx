@@ -27,7 +27,7 @@ export default function SlidesPage({ params }: { params: Promise<{ dayId: string
             "radial-gradient(90% 60% at 15% 0%, rgba(10,132,255,0.18), transparent 65%), radial-gradient(90% 60% at 85% 5%, rgba(191,90,242,0.14), transparent 65%)",
         }}
       />
-      <div className="relative mx-auto max-w-4xl px-4 py-6 sm:px-6">
+      <div className="relative mx-auto max-w-6xl px-3 py-6 sm:px-6">
         <div className="flex items-center gap-2">
           <Link
             href={day ? `/learn/${dayId}` : "/"}

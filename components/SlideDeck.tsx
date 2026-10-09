@@ -78,8 +78,8 @@ export default function SlideDeck({ deck }: { deck: Deck }) {
         {outlineList(true)}
       </details>
 
-      <aside className="hidden w-64 shrink-0 lg:block">
-        <div className="sticky top-4 max-h-[72vh] overflow-y-auto rounded-2xl border bg-white p-3">
+      <aside className="hidden w-72 shrink-0 lg:block">
+        <div className="sticky top-4 max-h-[78vh] overflow-y-auto rounded-2xl border bg-white p-3">
           <p className="flex items-center gap-1.5 px-1 text-xs font-black uppercase tracking-[0.2em] text-slate-500">
             <List size={13} /> Outline
           </p>
@@ -88,33 +88,33 @@ export default function SlideDeck({ deck }: { deck: Deck }) {
       </aside>
 
       <div className="min-w-0 flex-1 overflow-hidden rounded-3xl border bg-white shadow-xl">
-        <div className="bg-gradient-to-r from-sky-600 via-violet-600 to-orange-400 px-5 py-4 text-white sm:px-8 sm:py-5">
+        <div className="bg-gradient-to-r from-sky-600 via-violet-600 to-orange-400 px-6 py-5 sm:px-10 sm:py-6">
           <p className="text-[11px] font-bold uppercase tracking-[0.25em] text-white/80">
             {deck.title} · {i + 1} / {n}
           </p>
-          <p className="font-display text-xl font-bold leading-snug sm:text-2xl">{s.title}</p>
+          <p className="font-display text-2xl font-bold leading-snug sm:text-3xl">{s.title}</p>
         </div>
-        <ul className="space-y-2.5 px-5 py-5 sm:px-8">
+        <ul className="space-y-3 px-6 py-6 sm:px-10 sm:text-[16px]">
           {s.points.map((p, k) => (
-            <li key={k} className="flex items-start gap-2.5 text-sm leading-relaxed sm:text-[15px]">
-              <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-gradient-to-r from-sky-500 to-violet-500" />
+            <li key={k} className="flex items-start gap-3 text-[15px] leading-relaxed">
+              <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-gradient-to-r from-sky-500 to-violet-500" />
               {p}
             </li>
           ))}
         </ul>
         {s.diagram && (
-          <div className="px-5 pb-2 sm:px-8">
-            <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-3 dark:border-slate-700 dark:bg-slate-900/60">
+          <div className="px-6 pb-2 sm:px-10">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-700 dark:bg-slate-900/60">
               <Mermaid chart={s.diagram} />
             </div>
           </div>
         )}
         {s.source && (
-          <p className="px-5 pb-1 text-[11px] font-bold uppercase tracking-widest text-slate-400 sm:px-8">
+          <p className="px-6 pb-1 text-[11px] font-bold uppercase tracking-widest text-slate-400 sm:px-10">
             Source: {s.source}
           </p>
         )}
-        <div className="flex items-center gap-2 px-5 py-4 sm:px-8">
+        <div className="flex items-center gap-2 px-6 py-4 sm:px-10">
           <button
             onClick={() => go(-1)}
             disabled={i === 0}
