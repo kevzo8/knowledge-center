@@ -1,23 +1,15 @@
 import type { Metadata } from "next";
-import { Roboto, Roboto_Slab, Roboto_Mono } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import ConvexClientProvider from "../components/ConvexClientProvider";
 import { ThemeInitScript } from "../components/ThemeToggle";
 
-const roboto = Roboto({
-  variable: "--font-roboto",
+// Inter is the closest open match to San Francisco; on Apple devices the
+// system SF fonts take over automatically via the CSS font stack.
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
-  weight: ["300", "400", "500", "700"],
-});
-const slab = Roboto_Slab({
-  variable: "--font-slab",
-  subsets: ["latin"],
-  weight: ["500", "600", "700", "800"],
-});
-const mono = Roboto_Mono({
-  variable: "--font-robomon",
-  subsets: ["latin"],
-  weight: ["400", "500"],
+  weight: ["400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
@@ -30,7 +22,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${roboto.variable} ${slab.variable} ${mono.variable}`}
+      className={inter.variable}
     >
       <body className="min-h-screen antialiased">
         <ThemeInitScript />
