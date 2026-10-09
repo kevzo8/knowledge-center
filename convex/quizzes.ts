@@ -106,6 +106,17 @@ export const upsertQuestion = mutation({
     if (args.choices.length < 2) throw new Error("Need at least 2 choices");
     if (args.answerIndex < 0 || args.answerIndex >= args.choices.length)
       throw new Error("Bad answerIndex");
+    if (!(args.order >= 1)) throw new Error("Order must be 1 or higher");
+    const siblings = await ctx.db
+      .query("questions")
+      .withIndex("by_quiz", (q) => q.eq("quizId", args.quizId))
+      .collect();
+    if (
+      siblings.some(
+        (s) => String(s._id) !== String(args.questionId ?? "") && s.order === args.order
+      )
+    )
+      throw new Error(`Order ${args.order} is already used in this quiz — pick another`);
     if (args.questionId) {
       await ctx.db.patch(args.questionId, {
         quizId: args.quizId,

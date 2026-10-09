@@ -656,37 +656,56 @@ function QuestionForm({ token, quizId, question, nextOrder, onDone }: { token: s
   const [answerIndex, setAnswerIndex] = useState(question?.answerIndex ?? 0);
   const [order, setOrder] = useState(question?.order ?? nextOrder);
   const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState("");
   const choiceList = choices.split("\n").map((s) => s.trim()).filter(Boolean);
+  const letter = (i: number) => String.fromCharCode(65 + i);
 
   return (
     <div className="mt-2 grid gap-1.5 rounded-xl bg-slate-50 p-3 text-sm">
       <input className="rounded-xl border px-3 py-2" placeholder="Question prompt" value={prompt} onChange={(e) => setPrompt(e.target.value)} />
       <textarea className="rounded-xl border px-3 py-2" placeholder={"One choice per line,\ncommas are fine now"} value={choices} onChange={(e) => setChoices(e.target.value)} rows={4} />
       <div className="grid grid-cols-2 gap-1.5">
-        <label className="text-xs">Correct # (0-based)
-          <input type="number" min={0} max={Math.max(0, choiceList.length - 1)} className="mt-0.5 w-full rounded-xl border px-2 py-2 text-center font-mono" value={answerIndex} onChange={(e) => setAnswerIndex(Number(e.target.value))} />
+        <label className="text-xs">Correct answer
+          <select
+            className="mt-0.5 w-full rounded-xl border px-2 py-2 font-mono"
+            value={Math.min(answerIndex, Math.max(0, choiceList.length - 1))}
+            onChange={(e) => setAnswerIndex(Number(e.target.value))}
+          >
+            {choiceList.length === 0 && <option value={0}>Add choices first</option>}
+            {choiceList.map((c, i) => (
+              <option key={i} value={i}>
+                {letter(i)} – {c.slice(0, 40)}
+              </option>
+            ))}
+          </select>
         </label>
-        <label className="text-xs">Order
+        <label className="text-xs">Order = position in quiz (unique)
           <input type="number" min={1} className="mt-0.5 w-full rounded-xl border px-2 py-2 text-center font-mono" value={order} onChange={(e) => setOrder(Number(e.target.value))} />
         </label>
       </div>
       {choiceList.length > 0 && (
         <p className="text-xs text-slate-500">
-          Correct answer: <b>{choiceList[answerIndex] ?? "(pick a valid #)"}</b>
+          Correct answer: <b>{letter(Math.min(answerIndex, choiceList.length - 1))} – {choiceList[Math.min(answerIndex, choiceList.length - 1)]}</b>
         </p>
       )}
+      {err && <p className="text-xs font-bold text-red-600">{err}</p>}
       <button
         disabled={saving || !prompt.trim() || choiceList.length < 2}
         onClick={async () => {
           setSaving(true);
-          await (upsertQuestion as any)({
-            token, questionId: question?._id, quizId: quizId as any,
-            prompt: prompt.trim(), choices: choiceList,
-            answerIndex: Math.max(0, Math.min(choiceList.length - 1, answerIndex)),
-            points: 1, order,
-          });
+          setErr("");
+          try {
+            await (upsertQuestion as any)({
+              token, questionId: question?._id, quizId: quizId as any,
+              prompt: prompt.trim(), choices: choiceList,
+              answerIndex: Math.max(0, Math.min(choiceList.length - 1, answerIndex)),
+              points: 1, order,
+            });
+            onDone();
+          } catch (e: any) {
+            setErr(e?.message ?? "Save failed");
+          }
           setSaving(false);
-          onDone();
         }}
         className="btn-primary rounded-xl py-2 font-bold disabled:opacity-50"
       >

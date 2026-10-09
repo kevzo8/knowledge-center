@@ -204,6 +204,9 @@ function QuizTaker({ quizId, token }: { quizId: string; token: string | null }) 
                     setAnswers(n);
                   }}
                 />
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-slate-200 text-[11px] font-black text-slate-700 dark:bg-slate-700 dark:text-slate-200">
+                  {String.fromCharCode(65 + ci)}
+                </span>
                 {c}
               </label>
             ))}
