@@ -77,7 +77,8 @@ export default defineSchema({
     createdAt: v.number(),
   })
     .index("by_user", ["userId"])
-    .index("by_user_lecture", ["userId", "lectureId"]),
+    .index("by_user_lecture", ["userId", "lectureId"])
+    .index("by_user_activity", ["userId", "activityId"]),
 
   attempts: defineTable({
     userId: v.id("users"),

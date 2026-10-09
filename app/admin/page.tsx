@@ -415,8 +415,8 @@ function ActivityAdminRow({ token, activity, dayName }: { token: string; activit
           </p>
           {!roster && <p className="text-xs text-slate-500">Loading…</p>}
           {roster?.length === 0 && <p className="text-xs text-slate-500">Nobody yet.</p>}
-          {roster?.map((r) => (
-            <p key={r.username} className="text-xs">
+          {roster?.map((r, i) => (
+            <p key={`${r.username}-${r.at}-${i}`} className="text-xs">
               <span className="font-bold">{r.displayName}</span>{" "}
               <span className="font-mono text-slate-500">@{r.username} • {new Date(r.at).toLocaleDateString()}</span>
             </p>

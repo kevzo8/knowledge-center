@@ -150,6 +150,13 @@ export const submitQuiz = mutation({
       total += q.points;
       if (args.answers[i] === q.answerIndex) score += q.points;
     });
+    // Anti-farm: retakes only pay the improvement over your previous best.
+    const prior = await ctx.db
+      .query("attempts")
+      .withIndex("by_user_quiz", (q) => q.eq("userId", u._id).eq("quizId", args.quizId))
+      .collect();
+    const prevBest = prior.reduce((m, a) => Math.max(m, a.score), 0);
+    const prevPerfect = prior.some((a) => a.total > 0 && a.score >= a.total);
     const attemptId = await ctx.db.insert("attempts", {
       userId: u._id,
       quizId: args.quizId,
@@ -158,8 +165,10 @@ export const submitQuiz = mutation({
       total,
       createdAt: Date.now(),
     });
-    // XP = score (1pt = 1xp), plus perfect bonus +20%
-    const xp = score + (score === total && total > 0 ? Math.ceil(total * 0.2) : 0);
+    // XP = improvement over best (1pt = 1xp), plus perfect bonus +20% (first perfect only)
+    const xp =
+      Math.max(0, score - prevBest) +
+      (score === total && total > 0 && !prevPerfect ? Math.ceil(total * 0.2) : 0);
     if (xp > 0) {
       await ctx.db.insert("xpEvents", {
         userId: u._id,
@@ -231,6 +240,14 @@ export const completeActivity = mutation({
     const u = await getSessionUser(ctx, args.token);
     const activity = await ctx.db.get(args.activityId);
     if (!activity) throw new Error("Activity not found");
+    // One claim only — repeats pay nothing.
+    const existing = await ctx.db
+      .query("completions")
+      .withIndex("by_user_activity", (q) =>
+        q.eq("userId", u._id).eq("activityId", args.activityId)
+      )
+      .unique();
+    if (existing) return { already: true };
     await ctx.db.insert("completions", {
       userId: u._id,
       activityId: args.activityId,
@@ -244,7 +261,7 @@ export const completeActivity = mutation({
       xp: activity.points || 20,
       createdAt: Date.now(),
     });
-    return true;
+    return { already: false };
   },
 });
 

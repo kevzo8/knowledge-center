@@ -257,6 +257,41 @@ export const seedGrading = mutation({
   },
 });
 
+// One-time cleanup: keep only the earliest completion per (user, activity)
+// and remove the duplicate XP event for each dropped row.
+export const dedupeCompletions = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const all = await ctx.db.query("completions").collect();
+    const seen = new Set<string>();
+    let removedCompletions = 0;
+    let removedXp = 0;
+    const sorted = [...all].sort((a, b) => a.createdAt - b.createdAt);
+    for (const c of sorted) {
+      if (!c.activityId) continue;
+      const k = `${c.userId}:${c.activityId}`;
+      if (!seen.has(k)) {
+        seen.add(k);
+        continue;
+      }
+      await ctx.db.delete(c._id);
+      removedCompletions++;
+      const evts = await ctx.db
+        .query("xpEvents")
+        .withIndex("by_user", (q) => q.eq("userId", c.userId))
+        .collect();
+      const match = evts
+        .filter((e) => e.kind === "activity" && e.refId === String(c.activityId))
+        .sort((a, b) => b.createdAt - a.createdAt)[0];
+      if (match) {
+        removedXp += match.xp;
+        await ctx.db.delete(match._id);
+      }
+    }
+    return { removedCompletions, removedXp };
+  },
+});
+
 export const ensureAdmin = mutation({
   args: { username: v.string(), password: v.string(), displayName: v.string() },
   handler: async (ctx, args) => {
