@@ -75,6 +75,19 @@ export default function Dashboard() {
         </div>
       </header>
 
+      <section className="mt-5">
+        <Link
+          href="/"
+          className="card-lift flex items-center justify-between rounded-2xl border bg-white p-4"
+        >
+          <span>
+            <span className="block text-xs font-bold uppercase tracking-widest text-indigo-600">Training calendar</span>
+            <span className="block font-bold">Browse all 20 days →</span>
+          </span>
+          <CalendarDays size={24} className="text-indigo-600" />
+        </Link>
+      </section>
+
       {stats && (
         <section className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-5">
           {[
@@ -93,19 +106,6 @@ export default function Dashboard() {
       )}
 
       <ProgressSection token={token} stats={stats} board={board} username={user.username} />
-
-      <section className="mt-6">
-        <Link
-          href="/"
-          className="card-lift flex items-center justify-between rounded-2xl border bg-white p-4"
-        >
-          <span>
-            <span className="block text-xs font-bold uppercase tracking-widest text-indigo-600">Training calendar</span>
-            <span className="block font-bold">Browse all 20 days →</span>
-          </span>
-          <CalendarDays size={24} className="text-indigo-600" />
-        </Link>
-      </section>
 
       <section className="mt-6">
         <h2 className="flex items-center gap-1.5 text-sm font-bold uppercase tracking-widest">
