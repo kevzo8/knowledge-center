@@ -55,7 +55,7 @@ export default function Admin() {
         {tab === "activities" && <ActivitiesPanel token={token} />}
         {tab === "quiz" && <QuizPanel token={token} />}
         {tab === "overview" && <OverviewPanel token={token} isAdmin={me.role === "admin"} />}
-        {tab === "grading" && <GradingPanel token={token} />}
+        {tab === "grading" && <GradingPanel token={token} meUsername={me.username} />}
       </div>
     </main>
   );
@@ -874,7 +874,7 @@ function OverviewPanel({ token, isAdmin }: { token: string; isAdmin: boolean }) 
   );
 }
 
-function GradingPanel({ token }: { token: string }) {
+function GradingPanel({ token, meUsername }: { token: string; meUsername: string }) {
   const evals = useQuery((api as any)?.grading?.listEvaluations, { token }) as any[] | undefined;
   const rubrics = useQuery((api as any)?.grading?.listRubrics, { token }) as any[] | undefined;
   const days = useQuery((api as any)?.content?.listDaysAdmin, { token }) as any[] | undefined;
@@ -910,7 +910,7 @@ function GradingPanel({ token }: { token: string }) {
                 );
               })}
             </select>
-            {picked && <GradeEntry key={String(picked._id)} token={token} evaluationId={String(picked._id)} />}
+            {picked && <GradeEntry key={String(picked._id)} token={token} evaluationId={String(picked._id)} meUsername={meUsername} />}
           </div>
         )}
       </div>
@@ -1116,7 +1116,7 @@ function EvalBuilder({ token, rubrics, days, activities, evals }: { token: strin
   );
 }
 
-function GradeEntry({ token, evaluationId }: { token: string; evaluationId: string }) {
+function GradeEntry({ token, evaluationId, meUsername }: { token: string; evaluationId: string; meUsername: string }) {
   const data = useQuery((api as any)?.grading?.gradesForEvaluation, { token, evaluationId: evaluationId as any }) as any;
   const gradeTrainee = useMutation((api as any)?.grading?.gradeTrainee);
   const [openUser, setOpenUser] = useState<string | null>(null);
@@ -1127,17 +1127,20 @@ function GradeEntry({ token, evaluationId }: { token: string; evaluationId: stri
   const items: { category: string; criterion: string; maxScore: number }[] = data.rubric?.items ?? [];
   const maxTotal = items.reduce((s, it) => s + it.maxScore, 0);
 
-  function currentScores(username: string, existing: number[] | null): number[] {
+  function currentScores(username: string, ballots: any[]): number[] {
     if (scores[username]) return scores[username];
-    if (existing) return existing;
+    const mine = ballots.find((b: any) => b.gradedBy === meUsername);
+    if (mine) return mine.scores;
     return items.map(() => 0);
   }
 
   let lastCat = "";
   return (
     <div className="mt-2 space-y-1.5">
+      <p className="text-xs text-slate-500">Multiple trainers can score the same trainee — each keeps their own ballot, the trainee earns the average.</p>
       {data.rows.map((r: any) => {
-        const cur = currentScores(r.username, r.grade?.scores ?? null);
+        const ballots: any[] = r.ballots ?? (r.grade ? [{ ...r.grade }] : []);
+        const cur = currentScores(r.username, ballots);
         const earned = cur.reduce((s, v) => s + (Number(v) || 0), 0);
         const pct = maxTotal ? Math.round((earned / maxTotal) * 100) : 0;
         const isOpen = openUser === r.username;
@@ -1148,9 +1151,9 @@ function GradeEntry({ token, evaluationId }: { token: string; evaluationId: stri
                 <span className="font-bold">{r.displayName}</span>{" "}
                 <span className="font-mono text-xs text-slate-500">@{r.username}</span>
               </span>
-              {r.grade ? (
+              {r.average !== null && r.average !== undefined ? (
                 <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-black text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-200">
-                  {r.grade.percent}%{r.grade.gradedBy ? ` • ${r.grade.gradedBy}` : ""}
+                  avg {r.average}% • {ballots.length} ballot{ballots.length === 1 ? "" : "s"}
                 </span>
               ) : (
                 <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-bold text-slate-500">not graded</span>
@@ -1158,6 +1161,18 @@ function GradeEntry({ token, evaluationId }: { token: string; evaluationId: stri
             </button>
             {isOpen && (
               <div className="mt-2 border-t pt-2">
+                {ballots.length > 0 && (
+                  <div className="mb-2 space-y-0.5 rounded-xl bg-slate-50 p-2 text-xs">
+                    {ballots.map((b: any, bi: number) => (
+                      <p key={bi}>
+                        <span className="font-bold">{b.percent}%</span> by {b.gradedBy}
+                        <span className="text-slate-500"> • {new Date(b.at).toLocaleDateString()}</span>
+                        {b.gradedBy === meUsername && <span className="font-bold"> (your ballot)</span>}
+                      </p>
+                    ))}
+                  </div>
+                )}
+                <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500">Your ballot</p>
                 {items.map((it, i) => {
                   const showCat = it.category !== lastCat;
                   lastCat = it.category;
@@ -1185,20 +1200,21 @@ function GradeEntry({ token, evaluationId }: { token: string; evaluationId: stri
                 })}
                 <div className="mt-2 flex items-center gap-2">
                   <p className="text-sm font-black">
-                    Total: {earned}/{maxTotal} = {pct}%
+                    Yours: {earned}/{maxTotal} = {pct}%
                   </p>
                   <button
                     onClick={async () => {
                       try {
                         const res = await (gradeTrainee as any)({ token, evaluationId: evaluationId as any, username: r.username, scores: cur });
-                        setMsg(`Saved ${r.displayName}: ${res.percent}% (+${res.xp} XP)`);
+                        setScores({ ...scores, [r.username]: cur });
+                        setMsg(`Saved ${r.displayName}: your ${res.percent}%, average now ${res.average}% (+${res.xp} XP)`);
                       } catch (e: any) {
                         setMsg(e?.message ?? "Error");
                       }
                     }}
                     className="btn-primary ml-auto rounded-xl px-5 py-2 text-sm font-bold"
                   >
-                    Save grade
+                    Save my ballot
                   </button>
                 </div>
               </div>

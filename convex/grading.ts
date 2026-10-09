@@ -150,19 +150,27 @@ export const gradesForEvaluation = query({
       .query("grades")
       .withIndex("by_evaluation", (q) => q.eq("evaluationId", args.evaluationId))
       .collect();
-    const byUser = new Map(grades.map((g) => [String(g.userId), g]));
+    const byUser = new Map<string, any[]>();
+    for (const g of grades) {
+      const k = String(g.userId);
+      if (!byUser.has(k)) byUser.set(k, []);
+      byUser.get(k)!.push(g);
+    }
+    const avgOf = (list: any[]) =>
+      list.length ? Math.round(list.reduce((s, g) => s + g.percent, 0) / list.length) : null;
     return {
       evaluation,
       rubric,
       rows: trainees
         .map((t) => {
-          const g = byUser.get(String(t._id));
+          const ballots = (byUser.get(String(t._id)) ?? [])
+            .map((g) => ({ scores: g.scores, percent: g.percent, gradedBy: g.gradedBy, at: g.createdAt }))
+            .sort((a, b) => b.at - a.at);
           return {
             username: t.username,
             displayName: t.displayName,
-            grade: g
-              ? { scores: g.scores, percent: g.percent, gradedBy: g.gradedBy, at: g.createdAt }
-              : null,
+            average: avgOf(ballots),
+            ballots,
           };
         })
         .sort((a, b) => a.displayName.localeCompare(b.displayName)),
@@ -201,47 +209,64 @@ export const gradeTrainee = mutation({
       .unique();
     if (!trainee || !trainee.active) throw new Error("Trainee not found");
 
-    const existing = await ctx.db
+    // One ballot per trainer: update your own, or add a new one.
+    // The trainee earns the AVERAGE across all ballots.
+    const priorBallots = await ctx.db
       .query("grades")
       .withIndex("by_eval_user", (q) =>
         q.eq("evaluationId", args.evaluationId).eq("userId", trainee._id)
       )
-      .unique();
-    const gradeId = existing
-      ? (await ctx.db.patch(existing._id, {
-          scores: args.scores,
-          percent,
-          gradedBy: staff.username,
-          createdAt: Date.now(),
-        }), existing._id)
-      : await ctx.db.insert("grades", {
-          evaluationId: args.evaluationId,
-          userId: trainee._id,
-          scores: args.scores,
-          percent,
-          gradedBy: staff.username,
-          createdAt: Date.now(),
-        });
+      .collect();
+    const mine = priorBallots.find((g) => g.gradedBy === staff.username);
+    if (mine) {
+      await ctx.db.patch(mine._id, {
+        scores: args.scores,
+        percent,
+        gradedBy: staff.username,
+        createdAt: Date.now(),
+      });
+    } else {
+      await ctx.db.insert("grades", {
+        evaluationId: args.evaluationId,
+        userId: trainee._id,
+        scores: args.scores,
+        percent,
+        gradedBy: staff.username,
+        createdAt: Date.now(),
+      });
+    }
+    const ballots = await ctx.db
+      .query("grades")
+      .withIndex("by_eval_user", (q) =>
+        q.eq("evaluationId", args.evaluationId).eq("userId", trainee._id)
+      )
+      .collect();
+    const average = Math.round(ballots.reduce((s, g) => s + g.percent, 0) / ballots.length);
+    const evalKey = `eval:${String(args.evaluationId)}`;
 
-    // Replace any prior evaluation XP for this grade (re-grades don't double-pay).
+    // Replace evaluation XP with the ballot average (re-grades never double-pay).
     const oldXp = await ctx.db
       .query("xpEvents")
       .withIndex("by_user", (q) => q.eq("userId", trainee._id))
       .collect();
     for (const e of oldXp) {
-      if (e.kind === "evaluation" && e.refId === String(gradeId)) await ctx.db.delete(e._id);
+      if (
+        e.kind === "evaluation" &&
+        (e.refId === evalKey || ballots.some((g) => String(g._id) === e.refId))
+      )
+        await ctx.db.delete(e._id);
     }
-    const xp = Math.round((percent * evaluation.points) / 100);
+    const xp = Math.round((average * evaluation.points) / 100);
     if (xp > 0) {
       await ctx.db.insert("xpEvents", {
         userId: trainee._id,
         kind: "evaluation",
-        refId: String(gradeId),
+        refId: evalKey,
         xp,
         createdAt: Date.now(),
       });
     }
-    return { percent, earned, max, xp };
+    return { percent, average, ballots: ballots.length, earned, max, xp };
   },
 });
 
@@ -287,7 +312,17 @@ export const traineeOverview = query({
         .query("grades")
         .withIndex("by_user", (q) => q.eq("userId", u._id))
         .collect();
-      const evalAvg = grades.length ? Math.round(grades.reduce((s, g) => s + g.percent, 0) / grades.length) : null;
+      // Average per evaluation first (multiple panel ballots), then across evaluations.
+      const byEval = new Map<string, number[]>();
+      for (const g of grades) {
+        const k = String(g.evaluationId);
+        if (!byEval.has(k)) byEval.set(k, []);
+        byEval.get(k)!.push(g.percent);
+      }
+      const perEval = [...byEval.values()].map(
+        (list) => list.reduce((s, v) => s + v, 0) / list.length
+      );
+      const evalAvg = perEval.length ? Math.round(perEval.reduce((s, v) => s + v, 0) / perEval.length) : null;
 
       rows.push({
         username: u.username,
