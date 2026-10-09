@@ -26,8 +26,13 @@ export default function DayPage({ params }: { params: Promise<{ dayId: string }>
     (api as any)?.quizzes?.myCompletions,
     token ? { token } : "skip"
   ) as { lectures: string[]; activities: string[] } | undefined;
+  const myGrades = useQuery(
+    (api as any)?.grading?.myGrades,
+    token ? { token } : "skip"
+  ) as any[] | undefined;
   const doneLectures = new Set(completions?.lectures ?? []);
   const doneActivities = new Set(completions?.activities ?? []);
+  const gradeForActivity = (id: string) => myGrades?.find((g) => g.activityId === id);
 
   const completeLecture = useMutation((api as any)?.quizzes?.completeLecture);
   const completeActivity = useMutation((api as any)?.quizzes?.completeActivity);
@@ -42,7 +47,7 @@ export default function DayPage({ params }: { params: Promise<{ dayId: string }>
   async function markActivity(id: string) {
     if (!token) return;
     await (completeActivity as any)({ token, activityId: id as any });
-    setMsg("Activity done — XP added");
+    setMsg("Submitted — your trainer will grade it");
     setTimeout(() => setMsg(""), 2000);
   }
 
@@ -111,25 +116,34 @@ export default function DayPage({ params }: { params: Promise<{ dayId: string }>
       <h1 className="mt-8 flex items-center gap-2 text-xl font-black">
         <FlaskConical size={20} /> Activities
       </h1>
+      <p className="mt-1 text-sm text-slate-500">Submit your work — trainers grade it against a rubric. XP = score % × pool.</p>
       <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {activities?.map((a, i) => (
+        {activities?.map((a, i) => {
+          const grade = gradeForActivity(a._id);
+          const earned = grade ? Math.round((grade.percent * (grade.points || a.points)) / 100) : 0;
+          return (
           <div key={a._id} className={`sticky-note ${SN[(i + 2) % SN.length]}`}>
-            <p className="sn-kind">+{a.points} XP</p>
+            <p className="sn-kind">Up to {a.points} XP · trainer-graded</p>
             <p className="mt-1.5 text-sm font-bold leading-snug">{a.title}</p>
             <p className="mt-1.5 whitespace-pre-wrap text-[11px] opacity-80 line-clamp-4">{a.instructions}</p>
             {token && (
-              doneActivities.has(a._id) ? (
+              grade ? (
                 <span className="sn-done mt-2">
-                  <Check size={12} /> Completed +{a.points} XP
+                  <Check size={12} /> Graded {grade.percent}% (+{earned} XP)
+                </span>
+              ) : doneActivities.has(a._id) ? (
+                <span className="sn-btn mt-2 inline-flex cursor-default items-center gap-1 opacity-80">
+                  <Check size={12} /> Submitted — awaiting grade
                 </span>
               ) : (
                 <button onClick={() => markActivity(a._id)} className="sn-btn mt-2 inline-flex items-center gap-1">
-                  <Check size={12} /> Mark done +{a.points} XP
+                  <Check size={12} /> Submit for grading
                 </button>
               )
             )}
           </div>
-        ))}
+          );
+        })}
       </div>
 
       <h1 className="mt-6 text-xl font-black">Quizzes</h1>

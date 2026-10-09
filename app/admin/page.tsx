@@ -9,7 +9,7 @@ import { Check, ChevronDown, ChevronRight, ExternalLink, Paperclip, RefreshCw, U
 
 export default function Admin() {
   const { token, me, loading } = useMe();
-  const [tab, setTab] = useState<"users" | "days" | "activities" | "quiz" | "overview" | "grading">("users");
+  const [tab, setTab] = useState<"users" | "days" | "assess" | "overview">("users");
 
   if (loading) return <p className="p-10 text-center text-sm">Loading…</p>;
   if (!token || !me)
@@ -38,13 +38,13 @@ export default function Admin() {
         </div>
       </div>
       <div className="mt-4 flex flex-wrap gap-2">
-        {(["users", "days", "activities", "quiz", "overview", "grading"] as const).map((t) => (
+        {(["users", "days", "assess", "overview"] as const).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
             className={`rounded-full px-4 py-2 text-sm font-bold ${tab === t ? "btn-primary" : "border"}`}
           >
-            {t === "users" ? "Users" : t === "days" ? "Days & lectures" : t === "activities" ? "Activities" : t === "quiz" ? "Quizzes" : t === "overview" ? "Trainees" : "Grading"}
+            {t === "users" ? "Users" : t === "days" ? "Days & lectures" : t === "assess" ? "Assessments" : "Trainees"}
           </button>
         ))}
       </div>
@@ -52,10 +52,8 @@ export default function Admin() {
         {tab === "users" && me.role === "admin" && <UsersPanel token={token} />}
         {tab === "users" && me.role !== "admin" && <p className="text-sm">Only admins manage users.</p>}
         {tab === "days" && <DaysPanel token={token} />}
-        {tab === "activities" && <ActivitiesPanel token={token} />}
-        {tab === "quiz" && <QuizPanel token={token} />}
+        {tab === "assess" && <AssessmentsPanel token={token} />}
         {tab === "overview" && <OverviewPanel token={token} isAdmin={me.role === "admin"} />}
-        {tab === "grading" && <GradingPanel token={token} />}
       </div>
     </main>
   );
@@ -527,6 +525,33 @@ function ActivitiesPanel({ token }: { token: string }) {
   );
 }
 
+function AssessmentsPanel({ token }: { token: string }) {
+  return (
+    <section className="space-y-6">
+      <div className="rounded-2xl border bg-white p-4 text-sm">
+        <p className="font-bold">How assessment works here</p>
+        <ol className="mt-1 list-decimal space-y-1 pl-5 text-slate-600">
+          <li><b>Quizzes</b> are auto-graded — trainees answer, scores + XP land instantly.</li>
+          <li><b>Activities</b> are submit-for-grading — trainees submit, no instant XP.</li>
+          <li><b>Trainer grading</b> (panels, proposals, activities): link an evaluation to a rubric (and optionally an activity or day), score each criterion, trainee earns % of the XP pool.</li>
+        </ol>
+      </div>
+      <div>
+        <h2 className="text-sm font-bold uppercase tracking-widest">1 · Quizzes (auto-graded)</h2>
+        <div className="mt-2"><QuizPanel token={token} /></div>
+      </div>
+      <div>
+        <h2 className="text-sm font-bold uppercase tracking-widest">2 · Activities (trainees submit, you grade)</h2>
+        <div className="mt-2"><ActivitiesPanel token={token} /></div>
+      </div>
+      <div>
+        <h2 className="text-sm font-bold uppercase tracking-widest">3 · Trainer grading (rubrics + evaluations)</h2>
+        <div className="mt-2"><GradingPanel token={token} /></div>
+      </div>
+    </section>
+  );
+}
+
 function QuizPanel({ token }: { token: string }) {
   const quizzes = useQuery((api as any)?.quizzes?.listQuizzes, {}) as any[] | undefined;
   const upsertQuiz = useMutation((api as any)?.quizzes?.upsertQuiz);
@@ -723,12 +748,18 @@ function GradingPanel({ token }: { token: string }) {
   const evals = useQuery((api as any)?.grading?.listEvaluations, { token }) as any[] | undefined;
   const rubrics = useQuery((api as any)?.grading?.listRubrics, { token }) as any[] | undefined;
   const days = useQuery((api as any)?.content?.listDaysAdmin, { token }) as any[] | undefined;
+  const activities = useQuery((api as any)?.content?.listActivities, {}) as any[] | undefined;
   const [evalId, setEvalId] = useState("");
   const picked = evals?.find((e) => String(e._id) === evalId) ?? evals?.[0];
 
   return (
     <section className="space-y-4">
-      <EvalBuilder token={token} rubrics={rubrics} days={days} evals={evals} />
+      <div className="rounded-2xl border bg-white p-4 text-sm text-slate-600">
+        An <b>evaluation</b> is anything a trainer scores: a panel demo, a proposal, or an activity.
+        It points at a <b>rubric</b> (categories → criteria → max scores) and an <b>XP pool</b> —
+        a trainee scoring 85% on a 100-XP pool earns 85 XP. Re-grading replaces the old XP.
+      </div>
+      <EvalBuilder token={token} rubrics={rubrics} days={days} activities={activities} evals={evals} />
       <div className="rounded-2xl border bg-white p-4">
         <h2 className="font-bold">Grade trainees</h2>
         {!evals ? (
@@ -752,7 +783,7 @@ function GradingPanel({ token }: { token: string }) {
   );
 }
 
-function EvalBuilder({ token, rubrics, days, evals }: { token: string; rubrics: any[] | undefined; days: any[] | undefined; evals: any[] | undefined }) {
+function EvalBuilder({ token, rubrics, days, activities, evals }: { token: string; rubrics: any[] | undefined; days: any[] | undefined; activities: any[] | undefined; evals: any[] | undefined }) {
   const upsertRubric = useMutation((api as any)?.grading?.upsertRubric);
   const upsertEvaluation = useMutation((api as any)?.grading?.upsertEvaluation);
   const [open, setOpen] = useState(false);
@@ -760,6 +791,7 @@ function EvalBuilder({ token, rubrics, days, evals }: { token: string; rubrics: 
   const [rLines, setRLines] = useState("Logic & Execution | Sound program logic | 10\nPresentation | Clear demo | 10");
   const [eTitle, setETitle] = useState("");
   const [eDay, setEDay] = useState("");
+  const [eActivity, setEActivity] = useState("");
   const [eRubric, setERubric] = useState("");
   const [ePoints, setEPoints] = useState(100);
   const [msg, setMsg] = useState("");
@@ -808,6 +840,23 @@ function EvalBuilder({ token, rubrics, days, evals }: { token: string; rubrics: 
           <div className="rounded-xl bg-slate-50 p-3">
             <p className="font-bold">New evaluation</p>
             <input className="mt-1 w-full rounded-xl border px-3 py-2" placeholder="Title e.g. Panel 2: polish check" value={eTitle} onChange={(e) => setETitle(e.target.value)} />
+            <select
+              className="mt-1 w-full rounded-xl border px-3 py-2"
+              value={eActivity}
+              onChange={(e) => {
+                setEActivity(e.target.value);
+                const a = activities?.find((x) => String(x._id) === e.target.value);
+                if (a) {
+                  setEPoints(a.points || 100);
+                  if (!eTitle) setETitle(`Grade: ${a.title}`);
+                }
+              }}
+            >
+              <option value="">Grade an activity? pick one (fills XP pool)</option>
+              {activities?.map((a) => (
+                <option key={String(a._id)} value={String(a._id)}>{a.title.slice(0, 50)} (+{a.points})</option>
+              ))}
+            </select>
             <div className="mt-1 grid grid-cols-2 gap-1">
               <select className="rounded-xl border px-3 py-2" value={eDay} onChange={(e) => setEDay(e.target.value)}>
                 <option value="">No day</option>
@@ -832,10 +881,12 @@ function EvalBuilder({ token, rubrics, days, evals }: { token: string; rubrics: 
                       token,
                       title: eTitle,
                       dayId: eDay ? (eDay as any) : undefined,
+                      activityId: eActivity ? (eActivity as any) : undefined,
                       rubricId: eRubric as any,
                       points: ePoints,
                     });
                     setETitle("");
+                    setEActivity("");
                     setMsg("Evaluation saved");
                   } catch (e: any) {
                     setMsg(e?.message ?? "Error");

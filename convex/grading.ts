@@ -339,6 +339,8 @@ export const myGrades = query({
       const rubric = evaluation ? await ctx.db.get(evaluation.rubricId) : null;
       out.push({
         evaluationTitle: evaluation?.title ?? "Evaluation",
+        activityId: evaluation?.activityId ? String(evaluation.activityId) : null,
+        dayId: evaluation?.dayId ? String(evaluation.dayId) : null,
         points: evaluation?.points ?? 0,
         percent: g.percent,
         gradedBy: g.gradedBy,

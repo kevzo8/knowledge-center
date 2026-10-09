@@ -72,7 +72,7 @@ export default function Home() {
         <div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
           {[
             { icon: <BookOpen size={16} />, tint: "bg-sky-100/70 dark:bg-sky-950/50", title: "Lectures +10 XP", body: "Open any sticky note and hit Mark done." },
-            { icon: <FlaskConical size={16} />, tint: "bg-orange-100/70 dark:bg-orange-950/50", title: "Activities +20–40 XP", body: "Hands-on work — each card shows its points." },
+            { icon: <FlaskConical size={16} />, tint: "bg-orange-100/70 dark:bg-orange-950/50", title: "Activities = graded XP", body: "Submit your work — trainers score it on a rubric, % × pool becomes XP." },
             { icon: <ClipboardCheck size={16} />, tint: "bg-violet-100/70 dark:bg-violet-950/50", title: "Quizzes = score + bonus", body: "You earn what you score, +20% extra for a perfect run." },
             { icon: <Award size={16} />, tint: "bg-emerald-100/70 dark:bg-emerald-950/50", title: "Panels = % × pool", body: "Trainers grade panels against the rubric; 85% of 100 XP pool = 85 XP." },
           ].map((c) => (

@@ -240,7 +240,8 @@ export const completeActivity = mutation({
     const u = await getSessionUser(ctx, args.token);
     const activity = await ctx.db.get(args.activityId);
     if (!activity) throw new Error("Activity not found");
-    // One claim only — repeats pay nothing.
+    // Submit once — no instant XP. XP comes from the trainer's grade
+    // (evaluation linked to this activity): percent x XP pool.
     const existing = await ctx.db
       .query("completions")
       .withIndex("by_user_activity", (q) =>
@@ -252,13 +253,6 @@ export const completeActivity = mutation({
       userId: u._id,
       activityId: args.activityId,
       dayId: activity.dayId,
-      createdAt: Date.now(),
-    });
-    await ctx.db.insert("xpEvents", {
-      userId: u._id,
-      kind: "activity",
-      refId: args.activityId,
-      xp: activity.points || 20,
       createdAt: Date.now(),
     });
     return { already: false };
