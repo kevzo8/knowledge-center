@@ -6,6 +6,8 @@ import { use, useState } from "react";
 import Link from "next/link";
 import ThemeToggle from "../../../components/ThemeToggle";
 import { BookOpen, Check, ExternalLink, FlaskConical, Paperclip } from "lucide-react";
+import SlideDeck from "../../../components/SlideDeck";
+import { DECKS } from "../../../data/decks";
 
 export default function DayPage({ params }: { params: Promise<{ dayId: string }> }) {
   const { dayId } = use(params);
@@ -22,6 +24,8 @@ export default function DayPage({ params }: { params: Promise<{ dayId: string }>
     (api as any)?.quizzes?.listQuizzes,
     { dayId: dayId as any }
   ) as any[] | undefined;
+  const day = useQuery((api as any)?.content?.getDay, { dayId: dayId as any }) as any;
+  const deck = day ? DECKS[day.dayNo] : undefined;
   const completions = useQuery(
     (api as any)?.quizzes?.myCompletions,
     token ? { token } : "skip"
@@ -70,8 +74,18 @@ export default function DayPage({ params }: { params: Promise<{ dayId: string }>
         </p>
       )}
 
-      <h1 className="mt-2 flex items-center gap-2 text-xl font-black">
-        <BookOpen size={20} /> Lectures & slides
+      {deck && (
+        <>
+          <h1 className="mt-2 text-xl font-black">{deck.title}</h1>
+          {deck.subtitle && <p className="mt-1 text-sm text-slate-500">{deck.subtitle}</p>}
+          <div className="mt-3">
+            <SlideDeck deck={deck} />
+          </div>
+        </>
+      )}
+
+      <h1 className="mt-8 flex items-center gap-2 text-xl font-black">
+        <BookOpen size={20} /> Lectures & Documents
       </h1>
       <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {lectures?.map((l, i) => (

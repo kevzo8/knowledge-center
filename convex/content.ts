@@ -30,6 +30,13 @@ export const listDays = query({
   },
 });
 
+export const getDay = query({
+  args: { dayId: v.id("days") },
+  handler: async (ctx, args) => {
+    return await ctx.db.get(args.dayId);
+  },
+});
+
 export const listDaysAdmin = query({
   args: { token: v.string() },
   handler: async (ctx, args) => {
