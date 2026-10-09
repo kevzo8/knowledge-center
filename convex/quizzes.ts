@@ -314,6 +314,22 @@ export const leaderboard = query({
   },
 });
 
+// Which lectures/activities the logged-in user already completed.
+export const myCompletions = query({
+  args: { token: v.string() },
+  handler: async (ctx, args) => {
+    const u = await getSessionUser(ctx, args.token);
+    const rows = await ctx.db
+      .query("completions")
+      .withIndex("by_user", (q) => q.eq("userId", u._id))
+      .collect();
+    return {
+      lectures: rows.filter((r) => r.lectureId).map((r) => String(r.lectureId)),
+      activities: rows.filter((r) => r.activityId).map((r) => String(r.activityId)),
+    };
+  },
+});
+
 // Full history for the grade dashboard: XP events + attempts with quiz titles.
 export const history = query({
   args: { token: v.string() },

@@ -22,6 +22,12 @@ export default function DayPage({ params }: { params: Promise<{ dayId: string }>
     (api as any)?.quizzes?.listQuizzes,
     { dayId: dayId as any }
   ) as any[] | undefined;
+  const completions = useQuery(
+    (api as any)?.quizzes?.myCompletions,
+    token ? { token } : "skip"
+  ) as { lectures: string[]; activities: string[] } | undefined;
+  const doneLectures = new Set(completions?.lectures ?? []);
+  const doneActivities = new Set(completions?.activities ?? []);
 
   const completeLecture = useMutation((api as any)?.quizzes?.completeLecture);
   const completeActivity = useMutation((api as any)?.quizzes?.completeActivity);
@@ -87,9 +93,15 @@ export default function DayPage({ params }: { params: Promise<{ dayId: string }>
             )}
             {l.notes && <p className="mt-1.5 text-[11px] opacity-80 line-clamp-3">{l.notes}</p>}
             {token && (
-              <button onClick={() => markLecture(l._id)} className="sn-btn mt-2 inline-flex items-center gap-1">
-                <Check size={12} /> Done +10 XP
-              </button>
+              doneLectures.has(l._id) ? (
+                <span className="sn-done mt-2">
+                  <Check size={12} /> Completed +10 XP
+                </span>
+              ) : (
+                <button onClick={() => markLecture(l._id)} className="sn-btn mt-2 inline-flex items-center gap-1">
+                  <Check size={12} /> Mark done +10 XP
+                </button>
+              )
             )}
           </div>
         ))}
@@ -106,9 +118,15 @@ export default function DayPage({ params }: { params: Promise<{ dayId: string }>
             <p className="mt-1.5 text-sm font-bold leading-snug">{a.title}</p>
             <p className="mt-1.5 whitespace-pre-wrap text-[11px] opacity-80 line-clamp-4">{a.instructions}</p>
             {token && (
-              <button onClick={() => markActivity(a._id)} className="sn-btn mt-2 inline-flex items-center gap-1">
-                <Check size={12} /> Mark done
-              </button>
+              doneActivities.has(a._id) ? (
+                <span className="sn-done mt-2">
+                  <Check size={12} /> Completed +{a.points} XP
+                </span>
+              ) : (
+                <button onClick={() => markActivity(a._id)} className="sn-btn mt-2 inline-flex items-center gap-1">
+                  <Check size={12} /> Mark done +{a.points} XP
+                </button>
+              )
             )}
           </div>
         ))}
