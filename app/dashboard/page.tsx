@@ -40,7 +40,15 @@ export default function Dashboard() {
           </p>
           <h1 className="text-2xl font-black">
             Hi, {user.displayName}
-            <span className="ml-2 rounded-full bg-slate-900 px-2 py-0.5 align-middle text-[11px] font-bold uppercase text-white">
+            <span
+              className={`ml-2 rounded-full px-2 py-0.5 align-middle text-[11px] font-bold uppercase text-white ${
+                user.role === "admin"
+                  ? "bg-violet-600 dark:bg-violet-500"
+                  : user.role === "trainer"
+                    ? "bg-sky-600 dark:bg-sky-500"
+                    : "bg-emerald-600 dark:bg-emerald-500"
+              }`}
+            >
               {user.role}
             </span>
           </h1>
