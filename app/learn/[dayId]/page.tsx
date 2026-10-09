@@ -152,6 +152,7 @@ export default function DayPage({ params }: { params: Promise<{ dayId: string }>
           <div key={q._id} className="rounded-2xl border bg-white p-4">
             <p className="font-bold">{q.title}</p>
             {q.description && <p className="text-sm text-slate-600">{q.description}</p>}
+            <p className="text-xs text-slate-500">1 pt each · {q.points} XP pool · +20% for a perfect run</p>
             <QuizTaker quizId={q._id} token={token} />
           </div>
         ))}
@@ -189,7 +190,7 @@ function QuizTaker({ quizId, token }: { quizId: string; token: string | null }) 
     <div className="mt-2 space-y-3">
       {quiz.questions.map((q: any, qi: number) => (
         <div key={q._id} className="rounded-xl bg-slate-50 p-3">
-          <p className="text-sm font-bold">{qi + 1}. {q.prompt} <span className="font-normal text-slate-500">({q.points} pts)</span></p>
+          <p className="text-sm font-bold">{qi + 1}. {q.prompt}</p>
           <div className="mt-1 space-y-1">
             {q.choices.map((c: string, ci: number) => (
               <label key={ci} className="flex cursor-pointer items-center gap-2 text-sm">

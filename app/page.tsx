@@ -73,7 +73,7 @@ export default function Home() {
           {[
             { icon: <BookOpen size={16} />, tint: "bg-sky-100/70 dark:bg-sky-950/50", title: "Lectures +10 XP", body: "Open any sticky note and hit Mark done." },
             { icon: <FlaskConical size={16} />, tint: "bg-orange-100/70 dark:bg-orange-950/50", title: "Activities = graded XP", body: "Submit your work — trainers score it on a rubric, % × pool becomes XP." },
-            { icon: <ClipboardCheck size={16} />, tint: "bg-violet-100/70 dark:bg-violet-950/50", title: "Quizzes = score + bonus", body: "You earn what you score, +20% extra for a perfect run." },
+            { icon: <ClipboardCheck size={16} />, tint: "bg-violet-100/70 dark:bg-violet-950/50", title: "Quizzes = % × pool", body: "1 pt per question, scaled to the XP pool — e.g. 3/4 on a 100 pool = 75 XP, +20% if perfect." },
             { icon: <Award size={16} />, tint: "bg-emerald-100/70 dark:bg-emerald-950/50", title: "Panels = % × pool", body: "Trainers grade panels against the rubric; 85% of 100 XP pool = 85 XP." },
           ].map((c) => (
             <div key={c.title} className={`card-lift rounded-2xl border p-4 ${c.tint}`}>

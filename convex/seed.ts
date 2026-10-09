@@ -114,28 +114,28 @@ export const seedAll = mutation({
     // Quizzes: week 1 logic check, Java/OOP check, final
     const q1 = await ctx.db.insert("quizzes", { dayId: d5, title: "Quiz: Week 1 foundations", description: "SDLC, computers, batch, DB, sort/search.", points: 100, active: true });
     for (const q of [
-      { prompt: "In SDLC, what typically follows Requirements gathering?", choices: ["Deployment", "Design", "Maintenance", "Retirement"], answerIndex: 1, points: 25, order: 1 },
-      { prompt: "Batch processing means…", choices: ["Instant per-transaction", "Jobs grouped, run without user interaction", "Only sorting", "Card batches"], answerIndex: 1, points: 25, order: 2 },
-      { prompt: "Which shape is a DECISION in a flowchart?", choices: ["Rectangle", "Diamond", "Oval", "Parallelogram"], answerIndex: 1, points: 25, order: 3 },
-      { prompt: "Pseudocode is…", choices: ["Runnable mainframe code", "Plain-language steps before coding", "A flowchart shape", "A DB query"], answerIndex: 1, points: 25, order: 4 },
+      { prompt: "In SDLC, what typically follows Requirements gathering?", choices: ["Deployment", "Design", "Maintenance", "Retirement"], answerIndex: 1, points: 1, order: 1 },
+      { prompt: "Batch processing means…", choices: ["Instant per-transaction", "Jobs grouped, run without user interaction", "Only sorting", "Card batches"], answerIndex: 1, points: 1, order: 2 },
+      { prompt: "Which shape is a DECISION in a flowchart?", choices: ["Rectangle", "Diamond", "Oval", "Parallelogram"], answerIndex: 1, points: 1, order: 3 },
+      { prompt: "Pseudocode is…", choices: ["Runnable mainframe code", "Plain-language steps before coding", "A flowchart shape", "A DB query"], answerIndex: 1, points: 1, order: 4 },
     ])
       await ctx.db.insert("questions", { quizId: q1, ...q });
 
     const q2 = await ctx.db.insert("quizzes", { dayId: d15, title: "Quiz: Java + OOP + clean code", description: "Covers days 7–14. Trainer expands.", points: 100, active: true });
     for (const q of [
-      { prompt: "Encapsulation mainly means…", choices: ["Hiding internals, exposing behavior", "Copying code", "Running threads", "Sorting fast"], answerIndex: 0, points: 25, order: 1 },
-      { prompt: "DRY stands for…", choices: ["Do Repeat Yourself", "Don't Repeat Yourself", "Data Runs Yearly", "Deploy, Run, Yield"], answerIndex: 1, points: 25, order: 2 },
-      { prompt: "A race condition happens when…", choices: ["Two threads access shared state unsafely", "Code runs too slowly", "Deck has 52 cards", "Quiz has 4 options"], answerIndex: 0, points: 25, order: 3 },
-      { prompt: "SOLID's 'S' is…", choices: ["Single Responsibility", "Super Inheritance", "Static Data", "Synchronized"], answerIndex: 0, points: 25, order: 4 },
+      { prompt: "Encapsulation mainly means…", choices: ["Hiding internals, exposing behavior", "Copying code", "Running threads", "Sorting fast"], answerIndex: 0, points: 1, order: 1 },
+      { prompt: "DRY stands for…", choices: ["Do Repeat Yourself", "Don't Repeat Yourself", "Data Runs Yearly", "Deploy, Run, Yield"], answerIndex: 1, points: 1, order: 2 },
+      { prompt: "A race condition happens when…", choices: ["Two threads access shared state unsafely", "Code runs too slowly", "Deck has 52 cards", "Quiz has 4 options"], answerIndex: 0, points: 1, order: 3 },
+      { prompt: "SOLID's 'S' is…", choices: ["Single Responsibility", "Super Inheritance", "Static Data", "Synchronized"], answerIndex: 0, points: 1, order: 4 },
     ])
       await ctx.db.insert("questions", { quizId: q2, ...q });
 
     const q3 = await ctx.db.insert("quizzes", { dayId: d19, title: "Quiz: Solitaire readiness", description: "Rules + edge cases before final panel.", points: 100, active: true });
     for (const q of [
-      { prompt: "Klondike foundation piles build by…", choices: ["Suit, Ace→King", "Alternating colors down", "Any order", "Random"], answerIndex: 0, points: 25, order: 1 },
-      { prompt: "Tableau builds by…", choices: ["Suit up", "Alternating color descending", "Same color", "Pairs"], answerIndex: 1, points: 25, order: 2 },
-      { prompt: "Good edge case to test?", choices: ["Empty stock + empty waste", "Only happy path", "No shuffling ever", "Skipping README"], answerIndex: 0, points: 25, order: 3 },
-      { prompt: "Best reuse from War Card?", choices: ["Card/Deck/shuffle + game loop discipline", "Nothing", "Hardcoded values", "Copy-paste all"], answerIndex: 0, points: 25, order: 4 },
+      { prompt: "Klondike foundation piles build by…", choices: ["Suit, Ace→King", "Alternating colors down", "Any order", "Random"], answerIndex: 0, points: 1, order: 1 },
+      { prompt: "Tableau builds by…", choices: ["Suit up", "Alternating color descending", "Same color", "Pairs"], answerIndex: 1, points: 1, order: 2 },
+      { prompt: "Good edge case to test?", choices: ["Empty stock + empty waste", "Only happy path", "No shuffling ever", "Skipping README"], answerIndex: 0, points: 1, order: 3 },
+      { prompt: "Best reuse from War Card?", choices: ["Card/Deck/shuffle + game loop discipline", "Nothing", "Hardcoded values", "Copy-paste all"], answerIndex: 0, points: 1, order: 4 },
     ])
       await ctx.db.insert("questions", { quizId: q3, ...q });
 
@@ -289,6 +289,22 @@ export const dedupeCompletions = mutation({
       }
     }
     return { removedCompletions, removedXp };
+  },
+});
+
+// One-time: every quiz question is worth exactly 1 pt (XP scales by quiz pool).
+export const normalizeQuizPoints = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const qs = await ctx.db.query("questions").collect();
+    let fixed = 0;
+    for (const q of qs) {
+      if (q.points !== 1) {
+        await ctx.db.patch(q._id, { points: 1 });
+        fixed++;
+      }
+    }
+    return { fixed, total: qs.length };
   },
 });
 

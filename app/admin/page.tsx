@@ -617,7 +617,10 @@ function QuizCard({ token, quiz }: { token: string; quiz: any }) {
             <div className="mt-2 grid gap-1.5 text-sm sm:grid-cols-3">
               <input className="rounded-xl border px-3 py-2" value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} placeholder="title" />
               <input className="rounded-xl border px-3 py-2" value={f.description} onChange={(e) => setF({ ...f, description: e.target.value })} placeholder="description" />
-              <label className="flex items-center gap-2 text-xs">
+              <label className="text-xs">XP pool (100 = % becomes XP)
+                <input type="number" min={1} className="mt-0.5 w-full rounded-xl border px-3 py-2" value={f.points} onChange={(e) => setF({ ...f, points: Number(e.target.value) })} />
+              </label>
+              <label className="flex items-center gap-2 text-xs sm:col-span-2">
                 <input type="checkbox" checked={f.active} onChange={(e) => setF({ ...f, active: e.target.checked })} /> Visible to trainees
               </label>
               <button
@@ -625,7 +628,7 @@ function QuizCard({ token, quiz }: { token: string; quiz: any }) {
                   await (upsertQuiz as any)({ token, quizId: quiz._id, ...f });
                   setEditing(false);
                 }}
-                className="btn-primary rounded-xl py-2 font-bold sm:col-span-3"
+                className="btn-primary rounded-xl py-2 font-bold"
               >
                 Save quiz
               </button>
@@ -649,23 +652,19 @@ function QuizCard({ token, quiz }: { token: string; quiz: any }) {
 function QuestionForm({ token, quizId, question, nextOrder, onDone }: { token: string; quizId: string; question?: any; nextOrder: number; onDone: () => void }) {
   const upsertQuestion = useMutation((api as any)?.quizzes?.upsertQuestion);
   const [prompt, setPrompt] = useState(question?.prompt ?? "");
-  const [choices, setChoices] = useState<string>((question?.choices ?? []).join(", "));
+  const [choices, setChoices] = useState<string>((question?.choices ?? []).join("\n"));
   const [answerIndex, setAnswerIndex] = useState(question?.answerIndex ?? 0);
-  const [points, setPoints] = useState(question?.points ?? 25);
   const [order, setOrder] = useState(question?.order ?? nextOrder);
   const [saving, setSaving] = useState(false);
-  const choiceList = choices.split(",").map((s) => s.trim()).filter(Boolean);
+  const choiceList = choices.split("\n").map((s) => s.trim()).filter(Boolean);
 
   return (
     <div className="mt-2 grid gap-1.5 rounded-xl bg-slate-50 p-3 text-sm">
       <input className="rounded-xl border px-3 py-2" placeholder="Question prompt" value={prompt} onChange={(e) => setPrompt(e.target.value)} />
-      <textarea className="rounded-xl border px-3 py-2" placeholder="Choices, comma, separated" value={choices} onChange={(e) => setChoices(e.target.value)} rows={2} />
-      <div className="grid grid-cols-3 gap-1.5">
-        <label className="text-xs">Correct #
+      <textarea className="rounded-xl border px-3 py-2" placeholder={"One choice per line,\ncommas are fine now"} value={choices} onChange={(e) => setChoices(e.target.value)} rows={4} />
+      <div className="grid grid-cols-2 gap-1.5">
+        <label className="text-xs">Correct # (0-based)
           <input type="number" min={0} max={Math.max(0, choiceList.length - 1)} className="mt-0.5 w-full rounded-xl border px-2 py-2 text-center font-mono" value={answerIndex} onChange={(e) => setAnswerIndex(Number(e.target.value))} />
-        </label>
-        <label className="text-xs">Points
-          <input type="number" min={1} className="mt-0.5 w-full rounded-xl border px-2 py-2 text-center font-mono" value={points} onChange={(e) => setPoints(Number(e.target.value))} />
         </label>
         <label className="text-xs">Order
           <input type="number" min={1} className="mt-0.5 w-full rounded-xl border px-2 py-2 text-center font-mono" value={order} onChange={(e) => setOrder(Number(e.target.value))} />
@@ -684,7 +683,7 @@ function QuestionForm({ token, quizId, question, nextOrder, onDone }: { token: s
             token, questionId: question?._id, quizId: quizId as any,
             prompt: prompt.trim(), choices: choiceList,
             answerIndex: Math.max(0, Math.min(choiceList.length - 1, answerIndex)),
-            points, order,
+            points: 1, order,
           });
           setSaving(false);
           onDone();
@@ -706,7 +705,7 @@ function QuestionRow({ token, quizId, q }: { token: string; quizId: string; q: a
   return (
     <div className="rounded-xl border px-3 py-2 text-sm">
       <div className="flex items-center gap-2">
-        <span className="min-w-0 flex-1 font-bold">{q.prompt} <span className="font-normal text-slate-500">({q.points} pts)</span></span>
+        <span className="min-w-0 flex-1 font-bold">{q.prompt} <span className="font-normal text-slate-500">#{q.order}</span></span>
         <button onClick={() => setEditing(true)} className="rounded-full border px-2.5 py-1 text-xs font-bold">Edit</button>
         <button
           onClick={async () => {
@@ -935,7 +934,6 @@ function RubricRow({ token, rubric, usage }: { token: string; rubric: any; usage
 function EvalBuilder({ token, rubrics, days, activities, evals }: { token: string; rubrics: any[] | undefined; days: any[] | undefined; activities: any[] | undefined; evals: any[] | undefined }) {
   const upsertRubric = useMutation((api as any)?.grading?.upsertRubric);
   const upsertEvaluation = useMutation((api as any)?.grading?.upsertEvaluation);
-  const [open, setOpen] = useState(false);
   const [rTitle, setRTitle] = useState("");
   const [rLines, setRLines] = useState("Logic & Execution | Sound program logic | 10\nPresentation | Clear demo | 10");
   const [eTitle, setETitle] = useState("");
@@ -944,6 +942,8 @@ function EvalBuilder({ token, rubrics, days, activities, evals }: { token: strin
   const [eRubric, setERubric] = useState("");
   const [ePoints, setEPoints] = useState(100);
   const [msg, setMsg] = useState("");
+  const [openR, setOpenR] = useState(false);
+  const [openE, setOpenE] = useState(false);
 
   function parseItems() {
     return rLines
@@ -956,22 +956,33 @@ function EvalBuilder({ token, rubrics, days, activities, evals }: { token: strin
       });
   }
 
+  const rubricName = (id: string) => rubrics?.find((r) => String(r._id) === String(id))?.title ?? "?";
+  const dayTag = (id?: string) => {
+    const d = days?.find((x) => String(x._id) === String(id));
+    return d ? `Day ${d.dayNo}` : null;
+  };
+  const actTag = (id?: string) => activities?.find((x) => String(x._id) === String(id))?.title.slice(0, 32) ?? null;
+
   return (
-    <div className="rounded-2xl border bg-white p-4">
-      <div className="flex items-center gap-2">
-        <h2 className="font-bold">Rubrics & evaluations ({rubrics?.length ?? "…"} sheets • {evals?.length ?? "…"} events)</h2>
-        <button onClick={() => setOpen(!open)} className="ml-auto rounded-full border px-3 py-1 text-xs font-bold">
-          {open ? "Close" : "+ New"}
-        </button>
-      </div>
-      <div className="mt-2 space-y-1.5">
-        {rubrics?.map((r) => (
-          <RubricRow key={String(r._id)} token={token} rubric={r} usage={evals?.filter((e) => String(e.rubricId) === String(r._id)) ?? []} />
-        ))}
-      </div>
-      {open && (
-        <div className="mt-3 grid gap-4 text-sm lg:grid-cols-2">
-          <div className="rounded-xl bg-slate-50 p-3">
+    <div className="space-y-4">
+      <div className="rounded-2xl border bg-white p-4">
+        <div className="flex items-center gap-2">
+          <h2 className="font-bold">Score sheets — rubrics ({rubrics?.length ?? "…"})</h2>
+          <button onClick={() => setOpenR(!openR)} className="ml-auto rounded-full border px-3 py-1 text-xs font-bold">
+            {openR ? "Close" : "+ New sheet"}
+          </button>
+        </div>
+        <p className="mt-1 text-xs text-slate-500">
+          A rubric is just the reusable score sheet — categories, criteria, max scores.
+          Attach the same sheet to many evaluations.
+        </p>
+        <div className="mt-2 space-y-1.5">
+          {rubrics?.map((r) => (
+            <RubricRow key={String(r._id)} token={token} rubric={r} usage={evals?.filter((e) => String(e.rubricId) === String(r._id)) ?? []} />
+          ))}
+        </div>
+        {openR && (
+          <div className="mt-3 rounded-xl bg-slate-50 p-3 text-sm">
             <p className="font-bold">New rubric — one criterion per line</p>
             <p className="font-mono text-[11px] text-slate-500">Category | Criterion | max score</p>
             <input className="mt-1 w-full rounded-xl border px-3 py-2" placeholder="Rubric title" value={rTitle} onChange={(e) => setRTitle(e.target.value)} />
@@ -991,7 +1002,34 @@ function EvalBuilder({ token, rubrics, days, activities, evals }: { token: strin
               Save rubric
             </button>
           </div>
-          <div className="rounded-xl bg-slate-50 p-3">
+        )}
+      </div>
+
+      <div className="rounded-2xl border bg-white p-4">
+        <div className="flex items-center gap-2">
+          <h2 className="font-bold">Gradeable events — evaluations ({evals?.length ?? "…"})</h2>
+          <button onClick={() => setOpenE(!openE)} className="ml-auto rounded-full border px-3 py-1 text-xs font-bold">
+            {openE ? "Close" : "+ New event"}
+          </button>
+        </div>
+        <p className="mt-1 text-xs text-slate-500">
+          An evaluation is one thing you score — a panel, a proposal, an activity.
+          It borrows a sheet above and sets an XP pool: 85% of 100 = 85 XP.
+        </p>
+        <div className="mt-2 space-y-1.5">
+          {evals?.map((e) => (
+            <div key={String(e._id)} className="rounded-xl border px-3 py-2 text-sm">
+              <p className="font-bold">{e.title}</p>
+              <p className="text-xs text-slate-500">
+                sheet: {rubricName(String(e.rubricId))} • {e.points} XP pool • {e.gradedCount} graded
+                {dayTag(e.dayId ? String(e.dayId) : undefined) ? ` • ${dayTag(e.dayId ? String(e.dayId) : undefined)}` : ""}
+                {actTag(e.activityId ? String(e.activityId) : undefined) ? ` • grades: ${actTag(e.activityId ? String(e.activityId) : undefined)}` : ""}
+              </p>
+            </div>
+          ))}
+        </div>
+        {openE && (
+          <div className="mt-3 rounded-xl bg-slate-50 p-3 text-sm">
             <p className="font-bold">New evaluation</p>
             <input className="mt-1 w-full rounded-xl border px-3 py-2" placeholder="Title e.g. Panel 2: polish check" value={eTitle} onChange={(e) => setETitle(e.target.value)} />
             <select
@@ -1019,7 +1057,7 @@ function EvalBuilder({ token, rubrics, days, activities, evals }: { token: strin
                 ))}
               </select>
               <select className="rounded-xl border px-3 py-2" value={eRubric} onChange={(e) => setERubric(e.target.value)}>
-                <option value="">Pick rubric</option>
+                <option value="">Pick sheet</option>
                 {rubrics?.map((r) => (
                   <option key={String(r._id)} value={String(r._id)}>{r.title}</option>
                 ))}
@@ -1051,10 +1089,10 @@ function EvalBuilder({ token, rubrics, days, activities, evals }: { token: strin
                 Save evaluation
               </button>
             </div>
+            {msg && <p className="mt-1 text-xs">{msg}</p>}
           </div>
-          {msg && <p className="text-xs lg:col-span-2">{msg}</p>}
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

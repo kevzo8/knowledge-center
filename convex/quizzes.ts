@@ -112,7 +112,7 @@ export const upsertQuestion = mutation({
         prompt: args.prompt,
         choices: args.choices,
         answerIndex: args.answerIndex,
-        points: args.points,
+        points: 1, // every question is worth exactly 1 pt; XP scales by quiz pool
         order: args.order,
       });
       return args.questionId;
@@ -122,7 +122,7 @@ export const upsertQuestion = mutation({
       prompt: args.prompt,
       choices: args.choices,
       answerIndex: args.answerIndex,
-      points: args.points,
+      points: 1, // every question is worth exactly 1 pt; XP scales by quiz pool
       order: args.order,
     });
   },
@@ -169,10 +169,15 @@ export const submitQuiz = mutation({
     const sorted = questions.sort((a, b) => a.order - b.order);
     let score = 0;
     let total = 0;
+    let correct = 0;
     sorted.forEach((q, i) => {
       total += q.points;
-      if (args.answers[i] === q.answerIndex) score += q.points;
+      if (args.answers[i] === q.answerIndex) {
+        score += q.points;
+        correct++;
+      }
     });
+    const count = sorted.length;
     // Anti-farm: retakes only pay the improvement over your previous best.
     const prior = await ctx.db
       .query("attempts")
@@ -180,6 +185,7 @@ export const submitQuiz = mutation({
       .collect();
     const prevBest = prior.reduce((m, a) => Math.max(m, a.score), 0);
     const prevPerfect = prior.some((a) => a.total > 0 && a.score >= a.total);
+    const pool = quiz.points > 0 ? quiz.points : 100;
     const attemptId = await ctx.db.insert("attempts", {
       userId: u._id,
       quizId: args.quizId,
@@ -188,10 +194,13 @@ export const submitQuiz = mutation({
       total,
       createdAt: Date.now(),
     });
-    // XP = improvement over best (1pt = 1xp), plus perfect bonus +20% (first perfect only)
+    // XP = percent correct x pool (each question is 1 pt), plus perfect
+    // bonus +20% of pool (first perfect only). Retakes pay improvement only.
+    const pct = count ? correct / count : 0;
+    const prevPct = total && prevBest ? Math.min(1, prevBest / total) : 0;
     const xp =
-      Math.max(0, score - prevBest) +
-      (score === total && total > 0 && !prevPerfect ? Math.ceil(total * 0.2) : 0);
+      Math.max(0, Math.round(pct * pool) - Math.round(prevPct * pool)) +
+      (pct === 1 && count > 0 && !prevPerfect ? Math.ceil(pool * 0.2) : 0);
     if (xp > 0) {
       await ctx.db.insert("xpEvents", {
         userId: u._id,
