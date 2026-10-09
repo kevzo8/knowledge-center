@@ -47,47 +47,50 @@ export default function DayPage({ params }: { params: Promise<{ dayId: string }>
     );
 
   return (
-    <main className="mx-auto max-w-3xl px-5 py-8">
+    <main className="mx-auto max-w-5xl px-5 py-8">
       <div className="flex items-center justify-between gap-2">
         <Link href="/dashboard" className="text-sm underline">← All days</Link>
         <ThemeToggle />
       </div>
       {msg && <p className="mt-2 rounded-xl bg-emerald-50 border border-emerald-200 px-3 py-2 text-sm">{msg}</p>}
 
-      <h1 className="mt-2 text-xl font-black">Lectures & slides</h1>
-      <div className="mt-2 space-y-2">
-        {lectures?.map((l) => (
-          <div key={l._id} className="rounded-2xl border bg-white p-4">
-            <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500">{l.kind}</p>
-            <p className="font-bold">{l.title}</p>
-            {l.fileName && <p className="text-xs text-slate-500">📎 {l.fileName}</p>}
-            {l.notes && <p className="mt-1 text-sm text-slate-600">{l.notes}</p>}
-            <div className="mt-2 flex gap-2">
-              {l.url && (
-                <a href={l.url} target="_blank" className="rounded-full bg-slate-900 px-4 py-1.5 text-xs font-bold text-white">
-                  Open link ↗
-                </a>
-              )}
-              {token && (
-                <button onClick={() => markLecture(l._id)} className="rounded-full border px-4 py-1.5 text-xs font-bold">
-                  Mark done +10 XP
-                </button>
-              )}
-            </div>
+      <h1 className="mt-2 text-xl font-black">📌 Lectures & slides</h1>
+      <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {lectures?.map((l, i) => (
+          <div key={l._id} className={`sticky-note ${SN[i % SN.length]}`}>
+            <p className="sn-kind">{l.kind}</p>
+            <p className="mt-1.5 text-sm font-bold leading-snug">{l.title}</p>
+            {(l.fileId || l.fileName || l.url) && (
+              <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] font-bold">
+                {l.fileId ? (
+                  <LectureFile fileId={l.fileId} fileName={l.fileName ?? "attachment"} />
+                ) : (
+                  l.fileName && <span>📎 {l.fileName}</span>
+                )}
+                {l.url && <a href={l.url} target="_blank" className="sn-link">Open link ↗</a>}
+              </div>
+            )}
+            {l.notes && <p className="mt-1.5 text-[11px] opacity-80 line-clamp-3">{l.notes}</p>}
+            {token && (
+              <button onClick={() => markLecture(l._id)} className="sn-btn mt-2">
+                ✓ Done +10 XP
+              </button>
+            )}
           </div>
         ))}
         {!lectures && <p className="text-sm text-slate-500">Loading…</p>}
       </div>
 
-      <h1 className="mt-6 text-xl font-black">Activities</h1>
-      <div className="mt-2 space-y-2">
-        {activities?.map((a) => (
-          <div key={a._id} className="rounded-2xl border bg-white p-4">
-            <p className="font-bold">{a.title} <span className="text-xs text-indigo-600">+{a.points} XP</span></p>
-            <p className="mt-1 whitespace-pre-wrap text-sm text-slate-600">{a.instructions}</p>
+      <h1 className="mt-8 text-xl font-black">🛠️ Activities</h1>
+      <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {activities?.map((a, i) => (
+          <div key={a._id} className={`sticky-note ${SN[(i + 2) % SN.length]}`}>
+            <p className="sn-kind">+{a.points} XP</p>
+            <p className="mt-1.5 text-sm font-bold leading-snug">{a.title}</p>
+            <p className="mt-1.5 whitespace-pre-wrap text-[11px] opacity-80 line-clamp-4">{a.instructions}</p>
             {token && (
-              <button onClick={() => markActivity(a._id)} className="mt-2 rounded-full border px-4 py-1.5 text-xs font-bold">
-                Mark done
+              <button onClick={() => markActivity(a._id)} className="sn-btn mt-2">
+                ✓ Mark done
               </button>
             )}
           </div>
@@ -106,6 +109,18 @@ export default function DayPage({ params }: { params: Promise<{ dayId: string }>
         {quizzes?.length === 0 && <p className="text-sm text-slate-500">No quiz for this day yet.</p>}
       </div>
     </main>
+  );
+}
+
+const SN = ["sn-yellow", "sn-pink", "sn-blue", "sn-green", "sn-orange"];
+
+function LectureFile({ fileId, fileName }: { fileId: string; fileName: string }) {
+  const url = useQuery((api as any)?.content?.getFileUrl, { fileId: fileId as any }) as string | null | undefined;
+  if (!url) return <span>📎 {fileName}</span>;
+  return (
+    <a href={url} target="_blank" className="sn-link">
+      📎 {fileName} ↗
+    </a>
   );
 }
 

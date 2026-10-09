@@ -5,13 +5,12 @@ import { useMe } from "../../lib/useMe";
 import { clearToken } from "../../lib/auth-token";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import TrainingCalendar from "../../components/TrainingCalendar";
+import ProgressSection from "../../components/ProgressSection";
 import ThemeToggle from "../../components/ThemeToggle";
 
 export default function Dashboard() {
   const { token, me, loading } = useMe();
   const router = useRouter();
-  const days = useQuery((api as any)?.content?.listDays, {}) as any[] | undefined;
   const stats = useQuery(
     (api as any)?.quizzes?.myStats,
     token ? { token } : "skip"
@@ -81,11 +80,19 @@ export default function Dashboard() {
         </section>
       )}
 
+      <ProgressSection token={token} stats={stats} board={board} username={user.username} />
+
       <section className="mt-6">
-        <h2 className="text-sm font-bold uppercase tracking-widest">Training calendar — tap a day to open it</h2>
-        <div className="mt-2">
-          <TrainingCalendar days={days as any} />
-        </div>
+        <Link
+          href="/"
+          className="card-lift flex items-center justify-between rounded-2xl border bg-white p-4"
+        >
+          <span>
+            <span className="block text-xs font-bold uppercase tracking-widest text-indigo-600">Training calendar</span>
+            <span className="block font-bold">Browse all 20 days →</span>
+          </span>
+          <span className="text-2xl">🗓️</span>
+        </Link>
       </section>
 
       <section className="mt-6">

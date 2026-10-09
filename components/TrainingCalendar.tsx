@@ -65,7 +65,13 @@ const MONTHS = [
   "July", "August", "September", "October", "November", "December",
 ];
 
-export default function TrainingCalendar({ days }: { days: CalDay[] | undefined }) {
+export default function TrainingCalendar({
+  days,
+  redirectTo,
+}: {
+  days: CalDay[] | undefined;
+  redirectTo?: string;
+}) {
   const router = useRouter();
   const [view, setView] = useState({ y: 2026, m: 9 }); // Oct 2026
 
@@ -156,8 +162,8 @@ export default function TrainingCalendar({ days }: { days: CalDay[] | undefined 
           return (
             <button
               key={`${c.y}-${c.m}-${c.d}`}
-              onClick={() => router.push(`/learn/${t._id}`)}
-              title={t.title}
+              onClick={() => router.push(redirectTo ?? `/learn/${t._id}`)}
+              title={redirectTo ? `${t.title} (log in to open)` : t.title}
               className={`card-lift min-h-[56px] rounded-xl border px-1.5 py-1.5 text-left sm:min-h-[110px] ${st?.cell ?? "bg-slate-50"} ${
                 isToday ? "ring-2 ring-slate-900" : ""
               }`}

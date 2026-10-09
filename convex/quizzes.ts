@@ -313,3 +313,34 @@ export const leaderboard = query({
       .slice(0, args.limit ?? 20);
   },
 });
+
+// Full history for the grade dashboard: XP events + attempts with quiz titles.
+export const history = query({
+  args: { token: v.string() },
+  handler: async (ctx, args) => {
+    const u = await getSessionUser(ctx, args.token);
+    const xp = await ctx.db
+      .query("xpEvents")
+      .withIndex("by_user", (q) => q.eq("userId", u._id))
+      .collect();
+    const attempts = await ctx.db
+      .query("attempts")
+      .withIndex("by_user", (q) => q.eq("userId", u._id))
+      .collect();
+    const quizzes = await ctx.db.query("quizzes").collect();
+    const titles = new Map(quizzes.map((q) => [String(q._id), q.title]));
+    return {
+      xp: xp
+        .sort((a, b) => a.createdAt - b.createdAt)
+        .map((e) => ({ xp: e.xp, kind: e.kind, at: e.createdAt })),
+      attempts: attempts
+        .sort((a, b) => b.createdAt - a.createdAt)
+        .map((a) => ({
+          quizTitle: titles.get(String(a.quizId)) ?? "Quiz",
+          score: a.score,
+          total: a.total,
+          at: a.createdAt,
+        })),
+    };
+  },
+});
