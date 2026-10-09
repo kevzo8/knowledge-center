@@ -5,6 +5,7 @@ import { useMe } from "../../lib/useMe";
 import { useState } from "react";
 import ThemeToggle from "../../components/ThemeToggle";
 import { Check, ChevronDown, ChevronRight, ExternalLink, Paperclip, RefreshCw, Upload } from "lucide-react";
+import OverviewCharts from "../../components/OverviewCharts";
 
 export default function Admin() {
   const { token, me, loading } = useMe();
@@ -453,11 +454,16 @@ function gradeLetter(avg: number | null) {
 }
 
 function OverviewPanel({ token }: { token: string }) {
-  const rows = useQuery((api as any)?.grading?.traineeOverview, { token }) as any[] | undefined;
-  if (!rows) return <p className="text-sm text-slate-500">Loading overview…</p>;
+  const data = useQuery((api as any)?.grading?.traineeOverview, { token }) as
+    | { rows: any[]; panels: any[] }
+    | undefined;
+  const rows: any[] = data?.rows ?? [];
+  if (!data) return <p className="text-sm text-slate-500">Loading overview…</p>;
   if (rows.length === 0) return <p className="text-sm text-slate-500">No trainees yet — create accounts in Users.</p>;
   return (
-    <section className="rounded-2xl border bg-white p-4">
+    <div className="space-y-2">
+      <OverviewCharts rows={rows} panels={data.panels ?? []} />
+      <section className="rounded-2xl border bg-white p-4">
       <h2 className="font-bold">Trainees ({rows.length}) — lecture XP · quizzes · activities · panel grades</h2>
       <div className="mt-2 overflow-x-auto">
         <table className="w-full min-w-[880px] text-left text-sm">
@@ -499,7 +505,8 @@ function OverviewPanel({ token }: { token: string }) {
         </table>
       </div>
       <p className="mt-2 text-xs text-slate-500">Grade = average of quiz avg + panel avg. Grade trainees in the Grading tab.</p>
-    </section>
+      </section>
+    </div>
   );
 }
 

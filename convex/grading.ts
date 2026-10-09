@@ -306,7 +306,21 @@ export const traineeOverview = query({
         evalsGraded: grades.length,
       });
     }
-    return rows.sort((a, b) => b.totalXp - a.totalXp);
+    const sorted = rows.sort((a, b) => b.totalXp - a.totalXp);
+
+    // Cohort trend per evaluation (for the trend-line chart).
+    const evaluations = (await ctx.db.query("evaluations").collect()).filter((e) => e.active);
+    const allGrades = await ctx.db.query("grades").collect();
+    const panels = evaluations.map((e) => {
+      const gs = allGrades.filter((g) => String(g.evaluationId) === String(e._id));
+      return {
+        evaluationId: String(e._id),
+        title: e.title,
+        graded: gs.length,
+        avg: gs.length ? Math.round(gs.reduce((s, g) => s + g.percent, 0) / gs.length) : null,
+      };
+    });
+    return { rows: sorted, panels };
   },
 });
 
