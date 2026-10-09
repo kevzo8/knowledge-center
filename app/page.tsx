@@ -17,8 +17,20 @@ export default function Home() {
 
   return (
     <main className="relative mx-auto max-w-6xl px-6 py-14">
-      <div className="absolute right-4 top-4 sm:right-6 sm:top-6">
-        <ThemeToggle />
+      <div className="absolute right-4 top-4 flex items-center gap-2 sm:right-6 sm:top-6">
+        <Link
+          href="/login"
+          className="btn-primary rounded-full px-4 py-2 text-xs font-bold"
+        >
+          Log in
+        </Link>
+        <Link
+          href="/dashboard"
+          className="rounded-full border bg-white px-4 py-2 text-xs font-bold"
+        >
+          Dashboard
+        </Link>
+        <ThemeToggle compact />
       </div>
       <div className="text-center">
         <p className="text-xs font-bold uppercase tracking-[0.3em] text-indigo-600">
@@ -31,20 +43,6 @@ export default function Home() {
           4 weeks, 20 days (Oct 5–30). War Card v1 → v2 → Solitaire capstone.
           Admin creates accounts — no self-signup.
         </p>
-        <div className="mt-6 flex items-center justify-center gap-3">
-          <Link
-            href="/login"
-            className="btn-primary rounded-full px-6 py-3 text-sm font-bold"
-          >
-            Log in →
-          </Link>
-          <Link
-            href="/dashboard"
-            className="rounded-full border px-6 py-3 text-sm font-bold"
-          >
-            Dashboard
-          </Link>
-        </div>
       </div>
 
       <div className="mx-auto mt-10 max-w-5xl">

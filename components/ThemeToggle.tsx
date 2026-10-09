@@ -7,7 +7,7 @@ export function ThemeInitScript() {
   return <script dangerouslySetInnerHTML={{ __html: code }} />;
 }
 
-export default function ThemeToggle() {
+export default function ThemeToggle({ compact = false }: { compact?: boolean }) {
   const [dark, setDark] = useState(false);
   useEffect(() => {
     setDark(document.documentElement.classList.contains("dark"));
@@ -26,7 +26,9 @@ export default function ThemeToggle() {
     <button
       onClick={toggle}
       title={dark ? "Switch to light mode" : "Switch to dark mode"}
-      className="rounded-full border bg-white px-4 py-2 text-sm font-bold shadow-lg transition hover:scale-105"
+      className={`rounded-full border bg-white font-bold shadow-lg transition hover:scale-105 ${
+        compact ? "px-3 py-2 text-xs" : "px-4 py-2 text-sm"
+      }`}
     >
       {dark ? (
         <span className="inline-flex items-center gap-1.5">
