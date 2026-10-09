@@ -2,9 +2,12 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-@theme {
-  /* hairline borders everywhere instead of harsh currentColor black */
-  --default-border-color: var(--kc-line);
+/* Default hairline for every bare `border` width utility.
+   Lives in `base` so explicit colors (utilities layer) still win. */
+@layer base {
+  .border {
+    border-color: var(--kc-line);
+  }
 }
 
 :root {

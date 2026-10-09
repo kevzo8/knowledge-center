@@ -6,6 +6,7 @@ import { clearToken } from "../../lib/auth-token";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import ProgressSection from "../../components/ProgressSection";
+import StaffOverview from "../../components/StaffOverview";
 import ThemeToggle from "../../components/ThemeToggle";
 import { CalendarDays, Settings, Trophy } from "lucide-react";
 
@@ -30,6 +31,7 @@ export default function Dashboard() {
       </main>
     );
   const user = me as { username: string; role: string; displayName: string };
+  const isStaff = user.role === "admin" || user.role === "trainer";
 
   return (
     <main className="mx-auto max-w-6xl px-5 py-8">
@@ -75,6 +77,10 @@ export default function Dashboard() {
         </div>
       </header>
 
+      {isStaff ? (
+        <StaffOverview token={token} />
+      ) : (
+      <>
       <section className="mt-5">
         <Link
           href="/"
@@ -106,6 +112,8 @@ export default function Dashboard() {
       )}
 
       <ProgressSection token={token} stats={stats} board={board} username={user.username} />
+      </>
+      )}
 
       <section className="mt-6">
         <h2 className="flex items-center gap-1.5 text-sm font-bold uppercase tracking-widest">
