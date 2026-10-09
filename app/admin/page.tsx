@@ -4,6 +4,7 @@ import { api } from "../../convex/_generated/api";
 import { useMe } from "../../lib/useMe";
 import { useState } from "react";
 import ThemeToggle from "../../components/ThemeToggle";
+import { Check, ChevronDown, ChevronRight, ExternalLink, Paperclip, RefreshCw, Upload } from "lucide-react";
 
 export default function Admin() {
   const { token, me, loading } = useMe();
@@ -33,7 +34,7 @@ export default function Admin() {
           <button
             key={t}
             onClick={() => setTab(t)}
-            className={`rounded-full px-4 py-2 text-sm font-bold ${tab === t ? "bg-slate-900 text-white" : "border"}`}
+            className={`rounded-full px-4 py-2 text-sm font-bold ${tab === t ? "btn-primary" : "border"}`}
           >
             {t === "users" ? "Users" : t === "days" ? "Days & lectures" : "Activities & quizzes"}
           </button>
@@ -74,13 +75,13 @@ function UsersPanel({ token }: { token: string }) {
             onClick={async () => {
               try {
                 await (createUser as any)({ token, ...form });
-                setMsg("Created ✅");
+                setMsg("Created");
                 setForm({ username: "", password: "", role: "trainee", displayName: "" });
               } catch (e: any) {
                 setMsg(e.message ?? "Error");
               }
             }}
-            className="w-full rounded-xl bg-slate-900 py-2 font-bold text-white"
+            className="w-full btn-primary rounded-xl py-2 font-bold"
           >
             Create
           </button>
@@ -174,7 +175,7 @@ function DayCard({ token, day }: { token: string; day: any }) {
   return (
     <div className={`rounded-2xl border bg-white ${day.active ? "" : "opacity-60"}`}>
       <button onClick={() => setOpen(!open)} className="flex w-full items-center gap-2 px-4 py-3 text-left">
-        <span className="text-slate-400">{open ? "▾" : "▸"}</span>
+        <span className="text-slate-400">{open ? <ChevronDown size={16} /> : <ChevronRight size={16} />}</span>
         <span className="min-w-0 flex-1">
           <span className="block truncate font-bold">
             Day {day.dayNo}{day.week ? ` • W${day.week}` : ""}{day.date ? ` • ${day.date}` : ""} — {day.title}
@@ -307,7 +308,7 @@ function LectureRow({ token, lecture }: { token: string; lecture: any }) {
       });
       const { storageId } = await res.json();
       await (attach as any)({ token, lectureId: lecture._id, fileId: storageId, fileName: file.name });
-      setMsg("Uploaded ✅");
+      setMsg("Uploaded");
     } catch (e: any) {
       setMsg(e?.message ?? "Upload failed");
     }
@@ -332,14 +333,14 @@ function LectureRow({ token, lecture }: { token: string; lecture: any }) {
         </button>
       </div>
       <div className="mt-1 flex flex-wrap items-center gap-2 text-xs">
-        {lecture.url && <a href={lecture.url} target="_blank" className="text-indigo-600 underline">Open link ↗</a>}
+        {lecture.url && <a href={lecture.url} target="_blank" className="inline-flex items-center gap-0.5 text-indigo-600 underline">Open link <ExternalLink size={11} /></a>}
         {lecture.fileId && <StoredFileLink fileId={lecture.fileId} fileName={lecture.fileName ?? "file"} />}
-        {!lecture.fileId && lecture.fileName && <span className="text-slate-500">📎 {lecture.fileName} (not uploaded yet)</span>}
+        {!lecture.fileId && lecture.fileName && <span className="inline-flex items-center gap-1 text-slate-500"><Paperclip size={11} /> {lecture.fileName} (not uploaded yet)</span>}
         {lecture.notes && <span className="text-slate-500">• {lecture.notes}</span>}
       </div>
       <label className="mt-1.5 flex cursor-pointer items-center gap-2 text-xs font-bold text-indigo-700">
-        <span className="rounded-full border border-indigo-300 px-3 py-1">
-          {uploading ? "Uploading…" : lecture.fileId ? "↻ Replace file" : "⬆ Upload file"}
+        <span className="inline-flex items-center gap-1 rounded-full border border-indigo-300 px-3 py-1">
+          {uploading ? "Uploading…" : lecture.fileId ? (<><RefreshCw size={12} /> Replace file</>) : (<><Upload size={12} /> Upload file</>)}
         </span>
         <input
           type="file"
@@ -351,7 +352,7 @@ function LectureRow({ token, lecture }: { token: string; lecture: any }) {
             e.target.value = "";
           }}
         />
-        {msg && <span className="font-normal text-slate-500">{msg}</span>}
+        {msg && <span className="inline-flex items-center gap-1 font-normal text-slate-500">{msg === "Uploaded" && <Check size={12} />}{msg}</span>}
       </label>
       {editing && (
         <LectureForm token={token} dayId={lecture.dayId} lecture={lecture} nextOrder={lecture.order} onDone={() => setEditing(false)} />
@@ -362,8 +363,17 @@ function LectureRow({ token, lecture }: { token: string; lecture: any }) {
 
 function StoredFileLink({ fileId, fileName }: { fileId: string; fileName: string }) {
   const url = useQuery((api as any)?.content?.getFileUrl, { fileId: fileId as any }) as string | null | undefined;
-  if (!url) return <span className="text-slate-500">📎 {fileName}…</span>;
-  return <a href={url} target="_blank" className="text-indigo-600 underline">📎 {fileName} ↗</a>;
+  if (!url)
+    return (
+      <span className="inline-flex items-center gap-1 text-slate-500">
+        <Paperclip size={11} /> {fileName}…
+      </span>
+    );
+  return (
+    <a href={url} target="_blank" className="inline-flex items-center gap-0.5 text-indigo-600 underline">
+      <Paperclip size={11} /> {fileName} <ExternalLink size={11} />
+    </a>
+  );
 }
 
 function QuizPanel({ token }: { token: string }) {
@@ -393,7 +403,7 @@ function QuizPanel({ token }: { token: string }) {
               await (upsertQuiz as any)({ token, ...qForm });
               setQForm({ title: "", description: "", points: 100 });
             }}
-            className="rounded-xl bg-slate-900 py-2 font-bold text-white"
+            className="btn-primary rounded-xl py-2 font-bold"
           >
             Add quiz
           </button>

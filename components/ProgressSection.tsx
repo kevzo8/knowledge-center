@@ -2,14 +2,15 @@
 import { useQuery } from "convex/react";
 import { api } from "../convex/_generated/api";
 import { useMemo } from "react";
+import { BarChart3 } from "lucide-react";
 
 function gradeFor(avg: number | null) {
   if (avg === null) return { g: "—", label: "Take a quiz to earn a grade" };
-  if (avg >= 90) return { g: "S", label: "Outstanding! 🏆" };
-  if (avg >= 80) return { g: "A", label: "Great job! 💪" };
+  if (avg >= 90) return { g: "S", label: "Outstanding!" };
+  if (avg >= 80) return { g: "A", label: "Great job!" };
   if (avg >= 70) return { g: "B", label: "Good — keep pushing" };
   if (avg >= 60) return { g: "C", label: "Passing — aim higher" };
-  return { g: "D", label: "Review + retake 📚" };
+  return { g: "D", label: "Review + retake" };
 }
 
 const GRADE_BG: Record<string, string> = {
@@ -76,7 +77,9 @@ export default function ProgressSection({
 
   return (
     <section className="mt-6">
-      <h2 className="text-sm font-bold uppercase tracking-widest">📊 My grades & progress</h2>
+      <h2 className="flex items-center gap-1.5 text-sm font-bold uppercase tracking-widest">
+        <BarChart3 size={15} /> My grades & progress
+      </h2>
       <div className="mt-2 grid gap-2 sm:grid-cols-3">
         <div className={`card-lift rounded-2xl border p-4 text-center ${GRADE_BG[grade.g] ?? GRADE_BG["—"]}`}>
           <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500">Grade</p>
@@ -106,7 +109,7 @@ export default function ProgressSection({
         <div className="rounded-2xl border bg-white p-4">
           <p className="text-xs font-bold uppercase tracking-widest text-slate-500">XP over time</p>
           {!history || cum.length === 0 ? (
-            <p className="mt-2 text-sm text-slate-500">No XP yet — open a lecture and mark it done. ✅</p>
+            <p className="mt-2 text-sm text-slate-500">No XP yet — open a lecture and mark it done.</p>
           ) : (
             <svg viewBox={`0 0 ${W} ${H}`} className="mt-2 w-full" role="img" aria-label="XP over time">
               <defs>
@@ -129,7 +132,7 @@ export default function ProgressSection({
         <div className="rounded-2xl border bg-white p-4">
           <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Best quiz scores</p>
           {bestBars.length === 0 ? (
-            <p className="mt-2 text-sm text-slate-500">No quizzes taken yet — take one from any day. 📝</p>
+            <p className="mt-2 text-sm text-slate-500">No quizzes taken yet — take one from any day.</p>
           ) : (
             <div className="mt-2 space-y-2">
               {bestBars.map(([title, pct]) => (

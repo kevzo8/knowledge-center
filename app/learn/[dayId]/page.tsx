@@ -5,6 +5,7 @@ import { useMe } from "../../../lib/useMe";
 import { use, useState } from "react";
 import Link from "next/link";
 import ThemeToggle from "../../../components/ThemeToggle";
+import { BookOpen, Check, ExternalLink, FlaskConical, Paperclip } from "lucide-react";
 
 export default function DayPage({ params }: { params: Promise<{ dayId: string }> }) {
   const { dayId } = use(params);
@@ -29,13 +30,13 @@ export default function DayPage({ params }: { params: Promise<{ dayId: string }>
   async function markLecture(id: string) {
     if (!token) return;
     await (completeLecture as any)({ token, lectureId: id as any });
-    setMsg("Marked done +10 XP 🎉");
+    setMsg("Lecture done — +10 XP");
     setTimeout(() => setMsg(""), 2000);
   }
   async function markActivity(id: string) {
     if (!token) return;
     await (completeActivity as any)({ token, activityId: id as any });
-    setMsg("Activity done — XP added 🎉");
+    setMsg("Activity done — XP added");
     setTimeout(() => setMsg(""), 2000);
   }
 
@@ -52,9 +53,15 @@ export default function DayPage({ params }: { params: Promise<{ dayId: string }>
         <Link href="/dashboard" className="text-sm underline">← All days</Link>
         <ThemeToggle />
       </div>
-      {msg && <p className="mt-2 rounded-xl bg-emerald-50 border border-emerald-200 px-3 py-2 text-sm">{msg}</p>}
+      {msg && (
+        <p className="mt-2 flex items-center gap-1.5 rounded-xl border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm font-bold text-emerald-800 dark:border-emerald-700 dark:bg-emerald-950/70 dark:text-emerald-200">
+          <Check size={15} /> {msg}
+        </p>
+      )}
 
-      <h1 className="mt-2 text-xl font-black">📌 Lectures & slides</h1>
+      <h1 className="mt-2 flex items-center gap-2 text-xl font-black">
+        <BookOpen size={20} /> Lectures & slides
+      </h1>
       <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {lectures?.map((l, i) => (
           <div key={l._id} className={`sticky-note ${SN[i % SN.length]}`}>
@@ -65,15 +72,23 @@ export default function DayPage({ params }: { params: Promise<{ dayId: string }>
                 {l.fileId ? (
                   <LectureFile fileId={l.fileId} fileName={l.fileName ?? "attachment"} />
                 ) : (
-                  l.fileName && <span>📎 {l.fileName}</span>
+                  l.fileName && (
+                    <span className="inline-flex items-center gap-1">
+                      <Paperclip size={11} /> {l.fileName}
+                    </span>
+                  )
                 )}
-                {l.url && <a href={l.url} target="_blank" className="sn-link">Open link ↗</a>}
+                {l.url && (
+                  <a href={l.url} target="_blank" className="sn-link inline-flex items-center gap-0.5">
+                    Open link <ExternalLink size={11} />
+                  </a>
+                )}
               </div>
             )}
             {l.notes && <p className="mt-1.5 text-[11px] opacity-80 line-clamp-3">{l.notes}</p>}
             {token && (
-              <button onClick={() => markLecture(l._id)} className="sn-btn mt-2">
-                ✓ Done +10 XP
+              <button onClick={() => markLecture(l._id)} className="sn-btn mt-2 inline-flex items-center gap-1">
+                <Check size={12} /> Done +10 XP
               </button>
             )}
           </div>
@@ -81,7 +96,9 @@ export default function DayPage({ params }: { params: Promise<{ dayId: string }>
         {!lectures && <p className="text-sm text-slate-500">Loading…</p>}
       </div>
 
-      <h1 className="mt-8 text-xl font-black">🛠️ Activities</h1>
+      <h1 className="mt-8 flex items-center gap-2 text-xl font-black">
+        <FlaskConical size={20} /> Activities
+      </h1>
       <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {activities?.map((a, i) => (
           <div key={a._id} className={`sticky-note ${SN[(i + 2) % SN.length]}`}>
@@ -89,8 +106,8 @@ export default function DayPage({ params }: { params: Promise<{ dayId: string }>
             <p className="mt-1.5 text-sm font-bold leading-snug">{a.title}</p>
             <p className="mt-1.5 whitespace-pre-wrap text-[11px] opacity-80 line-clamp-4">{a.instructions}</p>
             {token && (
-              <button onClick={() => markActivity(a._id)} className="sn-btn mt-2">
-                ✓ Mark done
+              <button onClick={() => markActivity(a._id)} className="sn-btn mt-2 inline-flex items-center gap-1">
+                <Check size={12} /> Mark done
               </button>
             )}
           </div>
@@ -116,10 +133,15 @@ const SN = ["sn-yellow", "sn-pink", "sn-blue", "sn-green", "sn-orange"];
 
 function LectureFile({ fileId, fileName }: { fileId: string; fileName: string }) {
   const url = useQuery((api as any)?.content?.getFileUrl, { fileId: fileId as any }) as string | null | undefined;
-  if (!url) return <span>📎 {fileName}</span>;
+  if (!url)
+    return (
+      <span className="inline-flex items-center gap-1">
+        <Paperclip size={11} /> {fileName}
+      </span>
+    );
   return (
-    <a href={url} target="_blank" className="sn-link">
-      📎 {fileName} ↗
+    <a href={url} target="_blank" className="sn-link inline-flex items-center gap-0.5">
+      <Paperclip size={11} /> {fileName} <ExternalLink size={11} />
     </a>
   );
 }
@@ -167,8 +189,8 @@ function QuizTaker({ quizId, token }: { quizId: string; token: string | null }) 
         </button>
       )}
       {result && (
-        <p className="text-sm font-bold text-emerald-700">
-          Score: {result.score}/{result.total} • +{result.xp} XP 🎉
+        <p className="flex items-center gap-1.5 text-sm font-bold text-emerald-700">
+          <Check size={15} /> Score: {result.score}/{result.total} • +{result.xp} XP
         </p>
       )}
     </div>

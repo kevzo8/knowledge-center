@@ -2,6 +2,7 @@
 import Link from "next/link";
 import ThemeToggle from "../components/ThemeToggle";
 import TrainingCalendar from "../components/TrainingCalendar";
+import { CalendarDays, Lock } from "lucide-react";
 import { useQuery } from "convex/react";
 import { api } from "../convex/_generated/api";
 import { useEffect, useState } from "react";
@@ -47,9 +48,13 @@ export default function Home() {
       </div>
 
       <div className="mx-auto mt-10 max-w-5xl">
-        <h2 className="text-sm font-bold uppercase tracking-widest">🗓️ Training calendar — tap a day to open it</h2>
+        <h2 className="flex items-center gap-1.5 text-sm font-bold uppercase tracking-widest">
+          <CalendarDays size={15} /> Training calendar — tap a day to open it
+        </h2>
         {locked === true && (
-          <p className="mt-1 text-sm text-slate-500">🔒 Not logged in — tapping a day will take you to login first.</p>
+          <p className="mt-1 flex items-center gap-1.5 text-sm text-slate-500">
+            <Lock size={13} /> Not logged in — tapping a day will take you to login first.
+          </p>
         )}
         <div className="mt-2">
           <TrainingCalendar days={days} redirectTo={locked ? "/login" : undefined} />

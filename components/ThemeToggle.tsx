@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { Moon, Sun } from "lucide-react";
 
 export function ThemeInitScript() {
   const code = `(function(){try{var t=localStorage.getItem("kc-theme");if(t==="dark"||(!t&&matchMedia("(prefers-color-scheme: dark)").matches)){document.documentElement.classList.add("dark")}}catch(e){}})();`;
@@ -27,7 +28,15 @@ export default function ThemeToggle() {
       title={dark ? "Switch to light mode" : "Switch to dark mode"}
       className="rounded-full border bg-white px-4 py-2 text-sm font-bold shadow-lg transition hover:scale-105"
     >
-      {dark ? "☀️ Light" : "🌙 Dark"}
+      {dark ? (
+        <span className="inline-flex items-center gap-1.5">
+          <Sun size={15} /> Light
+        </span>
+      ) : (
+        <span className="inline-flex items-center gap-1.5">
+          <Moon size={15} /> Dark
+        </span>
+      )}
     </button>
   );
 }

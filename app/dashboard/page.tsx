@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import ProgressSection from "../../components/ProgressSection";
 import ThemeToggle from "../../components/ThemeToggle";
+import { CalendarDays, Trophy } from "lucide-react";
 
 export default function Dashboard() {
   const { token, me, loading } = useMe();
@@ -38,7 +39,7 @@ export default function Dashboard() {
             SVI Knowledge Center
           </p>
           <h1 className="text-2xl font-black">
-            Hi, {user.displayName} 👋
+            Hi, {user.displayName}
             <span className="ml-2 rounded-full bg-slate-900 px-2 py-0.5 align-middle text-[11px] font-bold uppercase text-white">
               {user.role}
             </span>
@@ -91,12 +92,14 @@ export default function Dashboard() {
             <span className="block text-xs font-bold uppercase tracking-widest text-indigo-600">Training calendar</span>
             <span className="block font-bold">Browse all 20 days →</span>
           </span>
-          <span className="text-2xl">🗓️</span>
+          <CalendarDays size={24} className="text-indigo-600" />
         </Link>
       </section>
 
       <section className="mt-6">
-        <h2 className="text-sm font-bold uppercase tracking-widest">🏆 Leaderboard — top trainees</h2>
+        <h2 className="flex items-center gap-1.5 text-sm font-bold uppercase tracking-widest">
+          <Trophy size={15} /> Leaderboard — top trainees
+        </h2>
         {!board && <p className="mt-2 text-sm text-slate-500">Loading…</p>}
         {board && board.length === 0 && (
           <p className="mt-2 text-sm text-slate-500">
@@ -110,10 +113,20 @@ export default function Dashboard() {
                 <div
                   key={r.username}
                   className={`card-lift rounded-2xl border bg-white p-4 text-center ${
-                    r.username === user.username ? "border-indigo-400 ring-1 ring-indigo-300" : ""
+                    r.username === user.username ? "border-indigo-400 ring-1 ring-indigo-300 dark:border-indigo-500 dark:ring-indigo-700" : ""
                   }`}
                 >
-                  <p className="text-2xl">{["🥇", "🥈", "🥉"][i]}</p>
+                  <span
+                    className={`mx-auto flex h-9 w-9 items-center justify-center rounded-full text-sm font-black ${
+                      [
+                        "bg-amber-300 text-amber-950 dark:bg-amber-500/30 dark:text-amber-200",
+                        "bg-slate-300 text-slate-800 dark:bg-slate-500/30 dark:text-slate-200",
+                        "bg-orange-300 text-orange-950 dark:bg-orange-500/30 dark:text-orange-200",
+                      ][i]
+                    }`}
+                  >
+                    {i + 1}
+                  </span>
                   <p className="mt-1 truncate font-bold">{r.displayName}</p>
                   <p className="font-mono text-xs text-slate-500">Lv{r.level} • {r.xp} XP</p>
                 </div>
@@ -125,7 +138,7 @@ export default function Dashboard() {
                   <div
                     key={r.username}
                     className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-sm ${
-                      r.username === user.username ? "bg-indigo-50 border-indigo-300" : "bg-white"
+                      r.username === user.username ? "bg-indigo-50 border-indigo-300 dark:bg-indigo-950/60 dark:border-indigo-700" : "bg-white"
                     }`}
                   >
                     <span className="w-8 font-black">#{i + 4}</span>
