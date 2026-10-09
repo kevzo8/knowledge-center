@@ -5,8 +5,7 @@ import { useMe } from "../../../lib/useMe";
 import { use, useState } from "react";
 import Link from "next/link";
 import ThemeToggle from "../../../components/ThemeToggle";
-import { BookOpen, Check, ExternalLink, FlaskConical, Paperclip } from "lucide-react";
-import SlideDeck from "../../../components/SlideDeck";
+import { BookOpen, Check, ExternalLink, FlaskConical, Paperclip, Play } from "lucide-react";
 import { DECKS } from "../../../data/decks";
 
 export default function DayPage({ params }: { params: Promise<{ dayId: string }> }) {
@@ -75,13 +74,23 @@ export default function DayPage({ params }: { params: Promise<{ dayId: string }>
       )}
 
       {deck && (
-        <>
-          <h1 className="mt-2 text-xl font-black">{deck.title}</h1>
-          {deck.subtitle && <p className="mt-1 text-sm text-slate-500">{deck.subtitle}</p>}
-          <div className="mt-3">
-            <SlideDeck deck={deck} />
+        <Link
+          href={`/slides/${dayId}`}
+          className="group mt-3 block overflow-hidden rounded-3xl bg-gradient-to-r from-sky-600 via-violet-600 to-orange-400 p-[1.5px] shadow-xl transition hover:scale-[1.01]"
+        >
+          <div className="rounded-3xl bg-[#0d1120] px-6 py-6 text-white sm:px-8">
+            <p className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-[11px] font-black uppercase tracking-[0.2em]">
+              <Play size={11} /> Main lecture · {deck.slides.length} slides
+            </p>
+            <p className="font-display mt-2 text-2xl font-bold leading-tight sm:text-3xl">{deck.title}</p>
+            {deck.subtitle && (
+              <p className="mt-1 max-w-2xl text-sm text-slate-300">{deck.subtitle}</p>
+            )}
+            <span className="mt-4 inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-bold text-slate-900 transition group-hover:gap-3">
+              <Play size={15} /> Start the lecture
+            </span>
           </div>
-        </>
+        </Link>
       )}
 
       <h1 className="mt-8 flex items-center gap-2 text-xl font-black">
