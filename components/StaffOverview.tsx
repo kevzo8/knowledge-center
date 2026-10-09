@@ -28,12 +28,12 @@ export default function StaffOverview({ token }: { token: string }) {
         </Link>
       </div>
       {!data && <p className="text-sm text-slate-500">Loading cohort data…</p>}
-      {data && data.rows.length === 0 && (
+      {data && (data.rows ?? []).length === 0 && (
         <p className="text-sm text-slate-500">No trainees yet — create accounts in Admin → Users.</p>
       )}
-      {data && data.rows.length > 0 && (
+      {data && (data.rows ?? []).length > 0 && (
         <>
-          <OverviewCharts rows={data.rows} panels={data.panels ?? []} />
+          <OverviewCharts rows={data.rows ?? []} panels={data.panels ?? []} />
           <div className="rounded-2xl border bg-white p-4">
             <div className="overflow-x-auto">
               <table className="w-full min-w-[720px] text-left text-sm">
