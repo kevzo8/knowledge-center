@@ -96,10 +96,50 @@ export default defineSchema({
       v.literal("lecture"),
       v.literal("activity"),
       v.literal("quiz"),
+      v.literal("evaluation"),
       v.literal("bonus")
     ),
     refId: v.string(),
     xp: v.number(),
     createdAt: v.number(),
   }).index("by_user", ["userId"]),
+
+  // Reusable judging rubrics: category -> criteria with max scores.
+  // e.g. War Card & Solitaire panel sheet, Project Proposal sheet.
+  rubrics: defineTable({
+    title: v.string(),
+    description: v.optional(v.string()),
+    items: v.array(
+      v.object({
+        category: v.string(),
+        criterion: v.string(),
+        maxScore: v.number(),
+      })
+    ),
+    active: v.boolean(),
+  }),
+
+  // A gradeable instance: panel, proposal defense, hands-on activity, etc.
+  evaluations: defineTable({
+    title: v.string(),
+    description: v.optional(v.string()),
+    dayId: v.optional(v.id("days")),
+    activityId: v.optional(v.id("activities")),
+    rubricId: v.id("rubrics"),
+    points: v.number(), // XP pool: earned XP = percent * points / 100
+    active: v.boolean(),
+  }).index("by_day", ["dayId"]),
+
+  // One trainer grade per trainee per evaluation.
+  grades: defineTable({
+    evaluationId: v.id("evaluations"),
+    userId: v.id("users"),
+    scores: v.array(v.number()), // parallel to rubric.items
+    percent: v.number(),
+    gradedBy: v.string(),
+    createdAt: v.number(),
+  })
+    .index("by_evaluation", ["evaluationId"])
+    .index("by_user", ["userId"])
+    .index("by_eval_user", ["evaluationId", "userId"]),
 });

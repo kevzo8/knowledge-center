@@ -2,7 +2,8 @@
 import { useQuery } from "convex/react";
 import { api } from "../convex/_generated/api";
 import { useMemo } from "react";
-import { BarChart3, Swords } from "lucide-react";
+import { useState } from "react";
+import { Award, BarChart3, Swords } from "lucide-react";
 
 function gradeFor(avg: number | null) {
   if (avg === null) return { g: "—", label: "Take a quiz to earn a grade" };
@@ -216,6 +217,46 @@ export default function ProgressSection({
           </div>
         )}
       </div>
+
+      <MyPanelGrades token={token} />
     </section>
+  );
+}
+
+function MyPanelGrades({ token }: { token: string }) {
+  const grades = useQuery((api as any)?.grading?.myGrades, { token }) as any[] | undefined;
+  const [open, setOpen] = useState<string | null>(null);
+  if (!grades || grades.length === 0) return null;
+  return (
+    <div className="mt-2 rounded-2xl border bg-white p-4">
+      <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-slate-500">
+        <Award size={14} /> My panel grades
+      </p>
+      <div className="mt-2 space-y-1.5">
+        {grades.map((g, i) => (
+          <div key={i} className="rounded-xl border px-3 py-2">
+            <button onClick={() => setOpen(open === `${i}` ? null : `${i}`)} className="flex w-full items-center gap-2 text-left text-sm">
+              <span className="min-w-0 flex-1 truncate font-bold">{g.evaluationTitle}</span>
+              <span className="rounded-full bg-violet-100 px-2.5 py-0.5 text-xs font-black text-violet-800 dark:bg-violet-950/70 dark:text-violet-200">
+                {g.percent}%
+              </span>
+            </button>
+            {open === `${i}` && (
+              <div className="mt-1.5 space-y-1 border-t pt-1.5 text-xs">
+                {g.items.map((it: any, k: number) => (
+                  <div key={k} className="flex items-baseline justify-between gap-2">
+                    <span className="min-w-0 flex-1 truncate text-slate-500">
+                      <span className="font-bold uppercase">{it.category}</span> — {it.criterion}
+                    </span>
+                    <span className="shrink-0 font-mono">{it.score}/{it.maxScore}</span>
+                  </div>
+                ))}
+                <p className="text-slate-500">Graded by {g.gradedBy} • worth {g.points} XP pool</p>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }

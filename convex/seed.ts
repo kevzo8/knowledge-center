@@ -191,6 +191,72 @@ export const fixWeek1Order = mutation({
   },
 });
 
+// Seeds the panel judging sheets from the old batch + their evaluations.
+// Idempotent: skips if rubrics already exist.
+export const seedGrading = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const existing = await ctx.db.query("rubrics").collect();
+    if (existing.length > 0) return { skipped: true };
+    const days = await ctx.db.query("days").collect();
+    const dayId = (n: number) => days.find((d) => d.dayNo === n)?._id;
+
+    const warRubric = await ctx.db.insert("rubrics", {
+      title: "War Card & Solitaire Panel Sheet",
+      description: "Criteria for Judging — panels fill this per trainee.",
+      items: [
+        { category: "Logic & Execution", criterion: "Sound program logic and efficient algorithms", maxScore: 10 },
+        { category: "Logic & Execution", criterion: "Correct implementation and execution of required functionality", maxScore: 10 },
+        { category: "Coding Standard Practices", criterion: "Code is readable and easy to understand", maxScore: 10 },
+        { category: "Coding Standard Practices", criterion: "Properly modularized into reusable components", maxScore: 10 },
+        { category: "Coding Standard Practices", criterion: "Follows coding standards and best practices", maxScore: 10 },
+        { category: "Object-Oriented Programming (OOP)", criterion: "Applies Encapsulation effectively", maxScore: 10 },
+        { category: "Object-Oriented Programming (OOP)", criterion: "Applies Abstraction effectively", maxScore: 15 },
+        { category: "Object-Oriented Programming (OOP)", criterion: "Applies Inheritance & Polymorphism effectively", maxScore: 15 },
+        { category: "Presentation", criterion: "Explains implementation, demos app, communicates professionally", maxScore: 10 },
+      ],
+      active: true,
+    });
+
+    const proposalRubric = await ctx.db.insert("rubrics", {
+      title: "Project Proposal Sheet",
+      description: "Criteria for Judging for project proposals.",
+      items: [
+        { category: "Problem Definition & Solution", criterion: "Clearly defines the problem with an effective, well-justified solution", maxScore: 30 },
+        { category: "Features & Requirements", criterion: "Features complete, relevant, aligned with objectives", maxScore: 30 },
+        { category: "Feasibility & Project Planning", criterion: "Realistic scope, approach, timeline, and feasibility", maxScore: 20 },
+        { category: "Presentation & Documentation", criterion: "Organized, professional document and presentation", maxScore: 20 },
+      ],
+      active: true,
+    });
+
+    await ctx.db.insert("evaluations", {
+      title: "Panel 1: War Card demo",
+      description: "Day 11 panel — demo War Card v1, defend OOP design decisions.",
+      dayId: dayId(11),
+      rubricId: warRubric,
+      points: 100,
+      active: true,
+    });
+    await ctx.db.insert("evaluations", {
+      title: "Final Panel: Solitaire demo",
+      description: "Day 20 panel — demo enhanced Solitaire + Q&A.",
+      dayId: dayId(20),
+      rubricId: warRubric,
+      points: 100,
+      active: true,
+    });
+    await ctx.db.insert("evaluations", {
+      title: "Project Proposal defense",
+      description: "Standalone proposal presentation grading.",
+      rubricId: proposalRubric,
+      points: 100,
+      active: true,
+    });
+    return { skipped: false };
+  },
+});
+
 export const ensureAdmin = mutation({
   args: { username: v.string(), password: v.string(), displayName: v.string() },
   handler: async (ctx, args) => {
