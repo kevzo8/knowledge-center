@@ -2,6 +2,11 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+@theme {
+  /* hairline borders everywhere instead of harsh currentColor black */
+  --default-border-color: var(--kc-line);
+}
+
 :root {
   --kc-ink: #1d1d1f;
   --kc-muted: #6e6e73;
@@ -101,6 +106,25 @@ code, pre, .font-mono {
 }
 .dark .border.bg-white {
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+/* frosted pill buttons — consistent everywhere */
+.rounded-full.border {
+  background: var(--kc-card);
+  backdrop-filter: blur(18px) saturate(1.8);
+  -webkit-backdrop-filter: blur(18px) saturate(1.8);
+  border: 1px solid var(--kc-line);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  transition: transform 0.12s ease, filter 0.15s ease;
+}
+.rounded-full.border:hover {
+  filter: brightness(1.05);
+}
+.rounded-full.border:active {
+  transform: scale(0.96);
+}
+.dark .rounded-full.border {
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 /* headline gradient: iOS blue → purple → orange */

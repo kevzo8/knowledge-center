@@ -18,18 +18,22 @@ export default function Home() {
   return (
     <main className="relative mx-auto max-w-6xl px-6 py-14">
       <div className="absolute right-4 top-4 flex items-center gap-2 sm:right-6 sm:top-6">
-        <Link
-          href="/login"
-          className="btn-primary rounded-full px-4 py-2 text-xs font-bold"
-        >
-          Log in
-        </Link>
-        <Link
-          href="/dashboard"
-          className="rounded-full border bg-white px-4 py-2 text-xs font-bold"
-        >
-          Dashboard
-        </Link>
+        {locked !== false && (
+          <Link
+            href="/login"
+            className="btn-primary rounded-full px-4 py-2 text-xs font-bold"
+          >
+            Log in
+          </Link>
+        )}
+        {locked === false && (
+          <Link
+            href="/dashboard"
+            className="rounded-full border bg-white px-4 py-2 text-xs font-bold"
+          >
+            Dashboard
+          </Link>
+        )}
         <ThemeToggle compact />
       </div>
       <div className="text-center">
