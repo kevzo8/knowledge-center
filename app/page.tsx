@@ -39,9 +39,13 @@ export default function Home() {
         <h1 className="mt-3 text-4xl font-extrabold tracking-tight sm:text-5xl">
           Learn by day. <span className="text-gradient">Practice. Level up.</span>
         </h1>
-        <p className="mx-auto mt-4 max-w-xl text-slate-600">
-          4 weeks, 20 days (Oct 5–30). War Card v1 → v2 → Solitaire capstone.
-          Admin creates accounts — no self-signup.
+        <p className="mx-auto mt-4 max-w-xl text-lg text-slate-600">
+          Four weeks, twenty days — from computer basics to Java and OOP,
+          ending in panel-judged card games. Earn XP for every lesson,
+          activity, and quiz along the way.
+        </p>
+        <p className="mx-auto mt-2 max-w-xl text-xs font-bold uppercase tracking-[0.2em] text-slate-400">
+          Oct 5–30 · War Card → Solitaire · Just log in, your admin handles accounts
         </p>
       </div>
 
