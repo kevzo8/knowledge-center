@@ -138,6 +138,31 @@ export const deleteLecture = mutation({
   },
 });
 
+export const deleteActivity = mutation({
+  args: { token: v.string(), activityId: v.id("activities") },
+  handler: async (ctx, args) => {
+    await requireStaff(ctx, args.token);
+    await ctx.db.delete(args.activityId);
+    return true;
+  },
+});
+
+// Who marked this activity done (for admin observability).
+export const activityRoster = query({
+  args: { token: v.string(), activityId: v.id("activities") },
+  handler: async (ctx, args) => {
+    await requireStaff(ctx, args.token);
+    const all = await ctx.db.query("completions").collect();
+    const mine = all.filter((c) => c.activityId && String(c.activityId) === String(args.activityId));
+    const out = [];
+    for (const c of mine.sort((a, b) => a.createdAt - b.createdAt)) {
+      const u = await ctx.db.get(c.userId);
+      if (u) out.push({ username: u.username, displayName: u.displayName, at: c.createdAt });
+    }
+    return out;
+  },
+});
+
 // ---------- Activities ----------
 export const listActivities = query({
   args: { dayId: v.optional(v.id("days")) },

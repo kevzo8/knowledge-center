@@ -349,3 +349,54 @@ export const myGrades = query({
     return out;
   },
 });
+
+// Manual XP adjustment (bonus or correction, negative allowed).
+export const grantBonus = mutation({
+  args: { token: v.string(), username: v.string(), xp: v.number() },
+  handler: async (ctx, args) => {
+    const staff = await requireStaff(ctx, args.token);
+    if (!Number.isFinite(args.xp) || args.xp === 0 || Math.abs(args.xp) > 1000)
+      throw new Error("Amount must be non-zero, within ±1000");
+    const u = await ctx.db
+      .query("users")
+      .withIndex("by_username", (q) => q.eq("username", args.username.trim().toLowerCase()))
+      .unique();
+    if (!u || !u.active) throw new Error("Trainee not found");
+    await ctx.db.insert("xpEvents", {
+      userId: u._id,
+      kind: "bonus",
+      refId: `manual:${staff.username}:${Date.now()}`,
+      xp: Math.round(args.xp),
+      createdAt: Date.now(),
+    });
+    return true;
+  },
+});
+
+// Staff view of one trainee's panel grades.
+export const gradesForTrainee = query({
+  args: { token: v.string(), username: v.string() },
+  handler: async (ctx, args) => {
+    await requireStaff(ctx, args.token);
+    const u = await ctx.db
+      .query("users")
+      .withIndex("by_username", (q) => q.eq("username", args.username.trim().toLowerCase()))
+      .unique();
+    if (!u) throw new Error("User not found");
+    const grades = await ctx.db
+      .query("grades")
+      .withIndex("by_user", (q) => q.eq("userId", u._id))
+      .collect();
+    const out = [];
+    for (const g of grades.sort((a, b) => b.createdAt - a.createdAt)) {
+      const evaluation = await ctx.db.get(g.evaluationId);
+      out.push({
+        evaluationTitle: evaluation?.title ?? "Evaluation",
+        percent: g.percent,
+        gradedBy: g.gradedBy,
+        at: g.createdAt,
+      });
+    }
+    return out;
+  },
+});

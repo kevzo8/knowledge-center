@@ -6,11 +6,10 @@ import { useState } from "react";
 import Link from "next/link";
 import ThemeToggle from "../../components/ThemeToggle";
 import { Check, ChevronDown, ChevronRight, ExternalLink, Paperclip, RefreshCw, Upload } from "lucide-react";
-import OverviewCharts from "../../components/OverviewCharts";
 
 export default function Admin() {
   const { token, me, loading } = useMe();
-  const [tab, setTab] = useState<"users" | "days" | "quiz" | "overview" | "grading">("users");
+  const [tab, setTab] = useState<"users" | "days" | "activities" | "quiz" | "overview" | "grading">("users");
 
   if (loading) return <p className="p-10 text-center text-sm">Loading…</p>;
   if (!token || !me)
@@ -39,13 +38,13 @@ export default function Admin() {
         </div>
       </div>
       <div className="mt-4 flex flex-wrap gap-2">
-        {(["users", "days", "quiz", "overview", "grading"] as const).map((t) => (
+        {(["users", "days", "activities", "quiz", "overview", "grading"] as const).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
             className={`rounded-full px-4 py-2 text-sm font-bold ${tab === t ? "btn-primary" : "border"}`}
           >
-            {t === "users" ? "Users" : t === "days" ? "Days & lectures" : t === "quiz" ? "Activities & quizzes" : t === "overview" ? "Trainee overview" : "Grading"}
+            {t === "users" ? "Users" : t === "days" ? "Days & lectures" : t === "activities" ? "Activities" : t === "quiz" ? "Quizzes" : t === "overview" ? "Trainees" : "Grading"}
           </button>
         ))}
       </div>
@@ -53,8 +52,9 @@ export default function Admin() {
         {tab === "users" && me.role === "admin" && <UsersPanel token={token} />}
         {tab === "users" && me.role !== "admin" && <p className="text-sm">Only admins manage users.</p>}
         {tab === "days" && <DaysPanel token={token} />}
+        {tab === "activities" && <ActivitiesPanel token={token} />}
         {tab === "quiz" && <QuizPanel token={token} />}
-        {tab === "overview" && <OverviewPanel token={token} />}
+        {tab === "overview" && <OverviewPanel token={token} isAdmin={me.role === "admin"} />}
         {tab === "grading" && <GradingPanel token={token} />}
       </div>
     </main>
@@ -387,6 +387,146 @@ function StoredFileLink({ fileId, fileName }: { fileId: string; fileName: string
   );
 }
 
+function ActivityAdminRow({ token, activity, dayName }: { token: string; activity: any; dayName: string }) {
+  const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const roster = useQuery(
+    (api as any)?.content?.activityRoster,
+    open ? { token, activityId: activity._id } : "skip"
+  ) as any[] | undefined;
+  const upsertActivity = useMutation((api as any)?.content?.upsertActivity);
+  const deleteActivity = useMutation((api as any)?.content?.deleteActivity);
+  const [f, setF] = useState({ title: activity.title, instructions: activity.instructions, points: activity.points, order: activity.order });
+
+  return (
+    <div className="rounded-xl border px-3 py-2">
+      <button onClick={() => setOpen(!open)} className="flex w-full items-center gap-2 text-left text-sm">
+        <span className="text-slate-400">{open ? <ChevronDown size={16} /> : <ChevronRight size={16} />}</span>
+        <span className="min-w-0 flex-1">
+          <span className="font-bold">{activity.title}</span>{" "}
+          <span className="text-xs text-slate-500">{dayName} • +{activity.points} XP{roster ? ` • ${roster.length} done` : ""}</span>
+        </span>
+      </button>
+      {open && (
+        <div className="mt-2 border-t pt-2 text-sm">
+          <p className="whitespace-pre-wrap text-slate-600">{activity.instructions}</p>
+          <p className="mt-1 text-[11px] font-bold uppercase tracking-widest text-slate-500">
+            Completed by ({roster?.length ?? "…"})
+          </p>
+          {!roster && <p className="text-xs text-slate-500">Loading…</p>}
+          {roster?.length === 0 && <p className="text-xs text-slate-500">Nobody yet.</p>}
+          {roster?.map((r) => (
+            <p key={r.username} className="text-xs">
+              <span className="font-bold">{r.displayName}</span>{" "}
+              <span className="font-mono text-slate-500">@{r.username} • {new Date(r.at).toLocaleDateString()}</span>
+            </p>
+          ))}
+          <div className="mt-2 flex gap-1.5">
+            <button onClick={() => setEditing(!editing)} className="rounded-full border px-3 py-1 text-xs font-bold">
+              {editing ? "Close" : "Edit"}
+            </button>
+            <button
+              onClick={async () => {
+                if (confirm(`Delete "${activity.title}"? Completions stay in history.`))
+                  await (deleteActivity as any)({ token, activityId: activity._id });
+              }}
+              className="rounded-full border px-3 py-1 text-xs text-red-600"
+            >
+              Delete
+            </button>
+          </div>
+          {editing && (
+            <div className="mt-2 grid gap-1.5 text-sm">
+              <input className="rounded-xl border px-3 py-2" value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} placeholder="title" />
+              <textarea className="rounded-xl border px-3 py-2" value={f.instructions} onChange={(e) => setF({ ...f, instructions: e.target.value })} placeholder="instructions" />
+              <div className="grid grid-cols-2 gap-1.5">
+                <label className="text-xs">XP points
+                  <input type="number" min={0} className="mt-0.5 w-full rounded-xl border px-3 py-2" value={f.points} onChange={(e) => setF({ ...f, points: Number(e.target.value) })} />
+                </label>
+                <label className="text-xs">Order
+                  <input type="number" className="mt-0.5 w-full rounded-xl border px-3 py-2" value={f.order} onChange={(e) => setF({ ...f, order: Number(e.target.value) })} />
+                </label>
+              </div>
+              <button
+                onClick={async () => {
+                  await (upsertActivity as any)({ token, activityId: activity._id, dayId: activity.dayId, ...f });
+                  setEditing(false);
+                }}
+                className="btn-primary rounded-xl py-2 font-bold"
+              >
+                Save activity
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ActivitiesPanel({ token }: { token: string }) {
+  const days = useQuery((api as any)?.content?.listDaysAdmin, { token }) as any[] | undefined;
+  const all = useQuery((api as any)?.content?.listActivities, {}) as any[] | undefined;
+  const upsertActivity = useMutation((api as any)?.content?.upsertActivity);
+  const [dayFilter, setDayFilter] = useState("");
+  const [adding, setAdding] = useState(false);
+  const [form, setForm] = useState({ dayId: "", title: "", instructions: "", points: 20, order: 1 });
+  const dayName = (id: string) => {
+    const d = days?.find((x) => String(x._id) === String(id));
+    return d ? `Day ${d.dayNo}` : "No day";
+  };
+  const list = (all ?? []).filter((a) => !dayFilter || String(a.dayId) === dayFilter);
+
+  return (
+    <section className="space-y-2">
+      <div className="flex items-center gap-2">
+        <h2 className="font-bold">Activities ({list.length}) — click to see who completed</h2>
+        <select className="ml-auto rounded-full border px-3 py-1.5 text-xs" value={dayFilter} onChange={(e) => setDayFilter(e.target.value)}>
+          <option value="">All days</option>
+          {days?.map((d) => (
+            <option key={String(d._id)} value={String(d._id)}>Day {d.dayNo}</option>
+          ))}
+        </select>
+        <button onClick={() => setAdding(!adding)} className="rounded-full border px-3 py-1.5 text-xs font-bold">
+          {adding ? "Cancel" : "+ Activity"}
+        </button>
+      </div>
+      {adding && (
+        <div className="grid gap-1.5 rounded-2xl border bg-white p-4 text-sm">
+          <div className="grid gap-1.5 sm:grid-cols-2">
+            <select className="rounded-xl border px-3 py-2" value={form.dayId} onChange={(e) => setForm({ ...form, dayId: e.target.value })}>
+              <option value="">No day</option>
+              {days?.map((d) => (
+                <option key={String(d._id)} value={String(d._id)}>Day {d.dayNo} — {d.title.slice(0, 40)}</option>
+              ))}
+            </select>
+            <div className="grid grid-cols-2 gap-1.5">
+              <input type="number" min={0} className="rounded-xl border px-3 py-2" placeholder="XP" value={form.points} onChange={(e) => setForm({ ...form, points: Number(e.target.value) })} />
+              <input type="number" className="rounded-xl border px-3 py-2" placeholder="order" value={form.order} onChange={(e) => setForm({ ...form, order: Number(e.target.value) })} />
+            </div>
+          </div>
+          <input className="rounded-xl border px-3 py-2" placeholder="title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+          <textarea className="rounded-xl border px-3 py-2" placeholder="instructions" value={form.instructions} onChange={(e) => setForm({ ...form, instructions: e.target.value })} />
+          <button
+            onClick={async () => {
+              await (upsertActivity as any)({ token, dayId: form.dayId ? (form.dayId as any) : undefined, title: form.title, instructions: form.instructions, points: form.points, order: form.order });
+              setAdding(false);
+              setForm({ dayId: form.dayId, title: "", instructions: "", points: 20, order: form.order + 1 });
+            }}
+            className="btn-primary rounded-xl py-2 font-bold"
+          >
+            Add activity
+          </button>
+        </div>
+      )}
+      {!all && <p className="text-sm text-slate-500">Loading…</p>}
+      {list.map((a) => (
+        <ActivityAdminRow key={String(a._id)} token={token} activity={a} dayName={dayName(String(a.dayId))} />
+      ))}
+    </section>
+  );
+}
+
 function QuizPanel({ token }: { token: string }) {
   const quizzes = useQuery((api as any)?.quizzes?.listQuizzes, {}) as any[] | undefined;
   const upsertQuiz = useMutation((api as any)?.quizzes?.upsertQuiz);
@@ -461,60 +601,121 @@ function gradeLetter(avg: number | null) {
   return "D";
 }
 
-function OverviewPanel({ token }: { token: string }) {
+function TraineeRow({ token, row, isAdmin }: { token: string; row: any; isAdmin: boolean }) {
+  const [open, setOpen] = useState(false);
+  const grades = useQuery(
+    (api as any)?.grading?.gradesForTrainee,
+    open ? { token, username: row.username } : "skip"
+  ) as any[] | undefined;
+  const resetPw = useMutation((api as any)?.auth?.resetPassword);
+  const setActive = useMutation((api as any)?.auth?.setActive);
+  const grantBonus = useMutation((api as any)?.grading?.grantBonus);
+  const [msg, setMsg] = useState("");
+  const combined = [row.quizAvg, row.evalAvg].filter((v) => v !== null) as number[];
+  const overall = combined.length ? Math.round(combined.reduce((s, v) => s + v, 0) / combined.length) : null;
+
+  async function act(fn: () => Promise<any>, ok: string) {
+    try {
+      await fn();
+      setMsg(ok);
+    } catch (e: any) {
+      setMsg(e?.message ?? "Error");
+    }
+  }
+
+  return (
+    <div className="rounded-xl border px-3 py-2">
+      <button onClick={() => setOpen(!open)} className="flex w-full items-center gap-2 text-left text-sm">
+        <span className="text-slate-400">{open ? <ChevronDown size={16} /> : <ChevronRight size={16} />}</span>
+        <span className="min-w-0 flex-1">
+          <span className="font-bold">{row.displayName}</span>{" "}
+          <span className="font-mono text-xs text-slate-500">@{row.username} • Lv{row.level} • {row.totalXp} XP</span>
+        </span>
+        <span className="font-display text-base font-bold">{gradeLetter(overall)}</span>
+        <span className="hidden text-xs text-slate-500 sm:inline">
+          Q:{row.quizAvg !== null ? `${row.quizAvg}%` : "—"} P:{row.evalAvg !== null ? `${row.evalAvg}%` : "—"}
+        </span>
+      </button>
+      {open && (
+        <div className="mt-2 border-t pt-2 text-sm">
+          <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
+            {[
+              ["Lectures", `${row.lecturesDone} (${row.lectureXp} XP)`],
+              ["Quizzes", `${row.quizzesTaken} taken${row.quizAvg !== null ? ` · avg ${row.quizAvg}%` : ""} (${row.quizXp} XP)`],
+              ["Activities", `${row.activitiesDone} (${row.activityXp} XP)`],
+              ["Panels", `${row.evalsGraded} graded${row.evalAvg !== null ? ` · avg ${row.evalAvg}%` : ""}`],
+            ].map(([k, v]) => (
+              <div key={k} className="rounded-lg bg-slate-50 px-2 py-1.5">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">{k}</p>
+                <p className="font-bold">{v}</p>
+              </div>
+            ))}
+          </div>
+          <p className="mt-2 text-[11px] font-bold uppercase tracking-widest text-slate-500">Panel grades</p>
+          {!grades && <p className="text-xs text-slate-500">Loading…</p>}
+          {grades?.length === 0 && <p className="text-xs text-slate-500">Not graded yet — grade in the Grading tab.</p>}
+          {grades?.map((g, i) => (
+            <p key={i} className="text-xs">
+              <span className="font-bold">{g.evaluationTitle}</span> — {g.percent}% <span className="text-slate-500">by {g.gradedBy}</span>
+            </p>
+          ))}
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {isAdmin && (
+              <>
+                <button
+                  onClick={() => {
+                    const np = prompt(`New password for ${row.username} (min 4):`);
+                    if (np) act(() => (resetPw as any)({ token, username: row.username, newPassword: np }), "Password reset");
+                  }}
+                  className="rounded-full border px-3 py-1 text-xs font-bold"
+                >
+                  Reset pw
+                </button>
+                <button
+                  onClick={() =>
+                    act(() => (setActive as any)({ token, username: row.username, active: false }), "Disabled — re-enable in Users tab")
+                  }
+                  className="rounded-full border px-3 py-1 text-xs"
+                >
+                  Disable
+                </button>
+              </>
+            )}
+            <button
+              onClick={() => {
+                const amt = prompt(`Bonus XP for ${row.username} (negative allowed, ±1000):`, "10");
+                if (amt !== null && amt.trim() !== "")
+                  act(() => (grantBonus as any)({ token, username: row.username, xp: Number(amt) }), `Adjusted ${amt} XP`);
+              }}
+              className="rounded-full border px-3 py-1 text-xs font-bold"
+            >
+              +/− XP
+            </button>
+          </div>
+          {msg && <p className="mt-1 text-xs">{msg}</p>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function OverviewPanel({ token, isAdmin }: { token: string; isAdmin: boolean }) {
   const data = useQuery((api as any)?.grading?.traineeOverview, { token }) as
     | { rows: any[]; panels: any[] }
     | undefined;
   const rows: any[] = data?.rows ?? [];
-  if (!data) return <p className="text-sm text-slate-500">Loading overview…</p>;
+  if (!data) return <p className="text-sm text-slate-500">Loading trainees…</p>;
   if (rows.length === 0) return <p className="text-sm text-slate-500">No trainees yet — create accounts in Users.</p>;
   return (
-    <div className="space-y-2">
-      <OverviewCharts rows={rows} panels={data.panels ?? []} />
-      <section className="rounded-2xl border bg-white p-4">
-      <h2 className="font-bold">Trainees ({rows.length}) — lecture XP · quizzes · activities · panel grades</h2>
-      <div className="mt-2 overflow-x-auto">
-        <table className="w-full min-w-[880px] text-left text-sm">
-          <thead>
-            <tr className="text-[11px] uppercase tracking-widest text-slate-500">
-              <th className="py-2 pr-3">Trainee</th>
-              <th className="pr-3">Lv</th>
-              <th className="pr-3">Total XP</th>
-              <th className="pr-3">Lectures</th>
-              <th className="pr-3">Quiz avg</th>
-              <th className="pr-3">Quiz XP</th>
-              <th className="pr-3">Activities</th>
-              <th className="pr-3">Panel avg</th>
-              <th>Grade</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((r) => {
-              const combined = [r.quizAvg, r.evalAvg].filter((v) => v !== null) as number[];
-              const overall = combined.length ? Math.round(combined.reduce((s, v) => s + v, 0) / combined.length) : null;
-              return (
-                <tr key={r.username} className="border-t">
-                  <td className="py-2 pr-3">
-                    <p className="font-bold">{r.displayName}</p>
-                    <p className="font-mono text-xs text-slate-500">@{r.username}</p>
-                  </td>
-                  <td className="pr-3 font-black">{r.level}</td>
-                  <td className="pr-3 font-mono font-bold">{r.totalXp}</td>
-                  <td className="pr-3">{r.lecturesDone} <span className="text-xs text-slate-500">({r.lectureXp}xp)</span></td>
-                  <td className="pr-3 font-bold">{r.quizAvg !== null ? `${r.quizAvg}%` : "—"} <span className="text-xs font-normal text-slate-500">({r.quizzesTaken})</span></td>
-                  <td className="pr-3 font-mono">{r.quizXp}</td>
-                  <td className="pr-3">{r.activitiesDone} <span className="text-xs text-slate-500">({r.activityXp}xp)</span></td>
-                  <td className="pr-3 font-bold">{r.evalAvg !== null ? `${r.evalAvg}%` : "—"} <span className="text-xs font-normal text-slate-500">({r.evalsGraded})</span></td>
-                  <td className="font-display text-lg font-bold">{gradeLetter(overall)}{overall !== null && <span className="text-xs font-normal text-slate-500"> {overall}%</span>}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+    <section className="rounded-2xl border bg-white p-4">
+      <h2 className="font-bold">Trainees ({rows.length}) — click a row to manage</h2>
+      <p className="text-xs text-slate-500">Full charts live on the staff dashboard. Here: details, grades, password resets, enable/disable, XP adjustments. Re-grade in the Grading tab (replaces old XP, never double-pays).</p>
+      <div className="mt-2 space-y-1.5">
+        {rows.map((r) => (
+          <TraineeRow key={r.username} token={token} row={r} isAdmin={isAdmin} />
+        ))}
       </div>
-      <p className="mt-2 text-xs text-slate-500">Grade = average of quiz avg + panel avg. Grade trainees in the Grading tab.</p>
-      </section>
-    </div>
+    </section>
   );
 }
 
