@@ -3,7 +3,7 @@ import { useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { use } from "react";
 import Link from "next/link";
-import { ArrowLeft, MonitorPlay } from "lucide-react";
+import { ArrowLeft, Home, MonitorPlay } from "lucide-react";
 import ThemeToggle from "../../../components/ThemeToggle";
 import SlideDeck from "../../../components/SlideDeck";
 import { DECKS } from "../../../data/decks";
@@ -29,6 +29,14 @@ export default function SlidesPage({ params }: { params: Promise<{ dayId: string
       />
       <div className="relative mx-auto max-w-6xl px-3 py-6 sm:px-6">
         <div className="flex items-center gap-2">
+          <Link
+            href="/"
+            title="Home"
+            aria-label="Home"
+            className="rounded-full border border-white/15 bg-white/10 p-2.5 text-white backdrop-blur transition hover:bg-white/20"
+          >
+            <Home size={14} />
+          </Link>
           <Link
             href={day ? `/learn/${dayId}` : "/"}
             className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-bold backdrop-blur transition hover:bg-white/20"
