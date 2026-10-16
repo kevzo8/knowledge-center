@@ -12,6 +12,16 @@ async function getSessionUser(ctx: any, token: string) {
   return u;
 }
 
+// Null-safe variant for read queries: expired sessions return empty data
+// instead of crashing the page. Mutations keep throwing (they're actions).
+async function getSessionUserOrNull(ctx: any, token: string) {
+  try {
+    return await getSessionUser(ctx, token);
+  } catch {
+    return null;
+  }
+}
+
 async function requireStaff(ctx: any, token: string) {
   const u = await getSessionUser(ctx, token);
   if (u.role !== "admin" && u.role !== "trainer")
@@ -259,7 +269,8 @@ export const submitQuiz = mutation({
 export const myAttempts = query({
   args: { token: v.string(), quizId: v.optional(v.id("quizzes")) },
   handler: async (ctx, args) => {
-    const u = await getSessionUser(ctx, args.token);
+    const u = await getSessionUserOrNull(ctx, args.token);
+    if (!u) return [];
     if (args.quizId) {
       const rows = await ctx.db
         .query("attempts")
@@ -346,7 +357,8 @@ function levelForXp(xp: number) {
 export const myStats = query({
   args: { token: v.string() },
   handler: async (ctx, args) => {
-    const u = await getSessionUser(ctx, args.token);
+    const u = await getSessionUserOrNull(ctx, args.token);
+    if (!u) return null;
     const xpRows = await ctx.db
       .query("xpEvents")
       .withIndex("by_user", (q) => q.eq("userId", u._id))
@@ -380,7 +392,8 @@ export const myStats = query({
 export const leaderboard = query({
   args: { token: v.string(), limit: v.optional(v.number()) },
   handler: async (ctx, args) => {
-    await getSessionUser(ctx, args.token);
+    const u = await getSessionUserOrNull(ctx, args.token);
+    if (!u) return [];
     const users = await ctx.db.query("users").collect();
     const xpRows = await ctx.db.query("xpEvents").collect();
     const byUser = new Map<string, number>();
@@ -403,7 +416,8 @@ export const leaderboard = query({
 export const myCompletions = query({
   args: { token: v.string() },
   handler: async (ctx, args) => {
-    const u = await getSessionUser(ctx, args.token);
+    const u = await getSessionUserOrNull(ctx, args.token);
+    if (!u) return { lectures: [], activities: [] };
     const rows = await ctx.db
       .query("completions")
       .withIndex("by_user", (q) => q.eq("userId", u._id))
@@ -419,7 +433,8 @@ export const myCompletions = query({
 export const history = query({
   args: { token: v.string() },
   handler: async (ctx, args) => {
-    const u = await getSessionUser(ctx, args.token);
+    const u = await getSessionUserOrNull(ctx, args.token);
+    if (!u) return { xp: [], attempts: [] };
     const xp = await ctx.db
       .query("xpEvents")
       .withIndex("by_user", (q) => q.eq("userId", u._id))

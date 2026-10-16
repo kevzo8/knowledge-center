@@ -12,6 +12,16 @@ async function getSessionUser(ctx: any, token: string) {
   return u;
 }
 
+// Null-safe variant for trainee-facing reads: expired sessions return
+// empty data instead of crashing the page.
+async function getSessionUserOrNull(ctx: any, token: string) {
+  try {
+    return await getSessionUser(ctx, token);
+  } catch {
+    return null;
+  }
+}
+
 async function requireStaff(ctx: any, token: string) {
   const u = await getSessionUser(ctx, token);
   if (u.role !== "admin" && u.role !== "trainer")
@@ -363,7 +373,8 @@ export const traineeOverview = query({
 export const myGrades = query({
   args: { token: v.string() },
   handler: async (ctx, args) => {
-    const u = await getSessionUser(ctx, args.token);
+    const u = await getSessionUserOrNull(ctx, args.token);
+    if (!u) return [];
     const grades = await ctx.db
       .query("grades")
       .withIndex("by_user", (q) => q.eq("userId", u._id))

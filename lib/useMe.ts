@@ -2,7 +2,7 @@
 import { useQuery } from "convex/react";
 import { api } from "../convex/_generated/api";
 import { useEffect, useState } from "react";
-import { getToken } from "./auth-token";
+import { getToken, clearToken } from "./auth-token";
 
 export type Me = {
   username: string;
@@ -19,5 +19,13 @@ export function useMe() {
     (api as any)?.auth?.me,
     token ? { token } : "skip"
   ) as Me | undefined;
+  useEffect(() => {
+    // Drop dead sessions so expired logins land on the login screen
+    // instead of hanging on stale tokens.
+    if (token && me === null) {
+      clearToken();
+      setTokenState(null);
+    }
+  }, [token, me]);
   return { token, me, loading: token !== null && me === undefined };
 }
