@@ -943,6 +943,52 @@ function TraineeRow({ token, row, isAdmin }: { token: string; row: any; isAdmin:
   );
 }
 
+function DataHealth({ token }: { token: string }) {
+  const audit = useQuery((api as any)?.content?.auditOrphans, { token }) as any;
+  const cleanup = useMutation((api as any)?.content?.cleanupOrphans);
+  const [msg, setMsg] = useState("");
+  const [busy, setBusy] = useState(false);
+  return (
+    <div className="mb-2 flex flex-wrap items-center gap-2 rounded-2xl border bg-white px-4 py-2.5 text-sm">
+      <ShieldCheck size={15} className="text-emerald-600" />
+      <span className="font-bold">Data health</span>
+      <span className="text-xs text-slate-500">
+        {!audit ? "checking…" : audit.total === 0 ? "clean — no orphaned rows" : `${audit.total} orphaned row(s): ` +
+          [
+            audit.completions ? `${audit.completions} completions` : "",
+            audit.lectureXp ? `${audit.lectureXp} lecture-XP` : "",
+            audit.activityXp ? `${audit.activityXp} activity-XP` : "",
+            audit.quizXp ? `${audit.quizXp} quiz-XP` : "",
+            audit.evalXp ? `${audit.evalXp} panel-XP` : "",
+            audit.attempts ? `${audit.attempts} attempts` : "",
+            audit.grades ? `${audit.grades} grades` : "",
+            audit.evaluations ? `${audit.evaluations} evaluations` : "",
+          ].filter(Boolean).join(", ")}
+      </span>
+      {audit && audit.total > 0 && (
+        <button
+          disabled={busy}
+          onClick={async () => {
+            if (!confirm(`Delete ${audit.total} orphaned row(s)? Completions, attempts, grades and their XP that point at deleted items.`)) return;
+            setBusy(true);
+            try {
+              const res = await (cleanup as any)({ token });
+              setMsg(`Cleaned ${res.deleted} row(s)`);
+            } catch (e: any) {
+              setMsg(e?.message ?? "Error");
+            }
+            setBusy(false);
+          }}
+          className="ml-auto rounded-full border border-red-300 px-3 py-1 text-xs font-bold text-red-600 disabled:opacity-50"
+        >
+          {busy ? "Cleaning…" : "Clean orphans"}
+        </button>
+      )}
+      {msg && <span className="text-xs">{msg}</span>}
+    </div>
+  );
+}
+
 function OverviewPanel({ token, isAdmin }: { token: string; isAdmin: boolean }) {
   const data = useQuery((api as any)?.grading?.traineeOverview, { token }) as
     | { rows: any[]; panels: any[] }
@@ -951,7 +997,9 @@ function OverviewPanel({ token, isAdmin }: { token: string; isAdmin: boolean }) 
   if (!data) return <p className="text-sm text-slate-500">Loading trainees…</p>;
   if (rows.length === 0) return <p className="text-sm text-slate-500">No trainees yet — create accounts in Users.</p>;
   return (
-    <section className="rounded-2xl border bg-white p-4">
+    <>
+      <DataHealth token={token} />
+      <section className="rounded-2xl border bg-white p-4">
       <h2 className="font-bold">Trainees ({rows.length}) — click a row to manage</h2>
       <p className="text-xs text-slate-500">Full charts live on the staff dashboard. Here: details, grades, password resets, enable/disable, XP adjustments. Re-grade in the Grading tab (replaces old XP, never double-pays).</p>
       <div className="mt-2 space-y-1.5">
@@ -1011,18 +1059,36 @@ function GradingPanel({ token, meUsername }: { token: string; meUsername: string
 
 function RubricRow({ token, rubric, usage }: { token: string; rubric: any; usage: any[] }) {
   const [open, setOpen] = useState(false);
+  const deleteRubric = useMutation((api as any)?.grading?.deleteRubric);
+  const [msg, setMsg] = useState("");
   const max = (rubric.items ?? []).reduce((s: number, it: any) => s + (it.maxScore || 0), 0);
   return (
     <div className="rounded-xl border px-3 py-2">
-      <button onClick={() => setOpen(!open)} className="flex w-full items-center gap-2 text-left text-sm">
-        <span className="text-slate-400">{open ? <ChevronDown size={16} /> : <ChevronRight size={16} />}</span>
-        <span className="min-w-0 flex-1">
-          <span className="font-bold">{rubric.title}</span>{" "}
-          <span className="text-xs text-slate-500">
-            {(rubric.items ?? []).length} criteria • /{max} • used by {usage.length} evaluation{usage.length === 1 ? "" : "s"}
+      <div className="flex items-center gap-2">
+        <button onClick={() => setOpen(!open)} className="flex min-w-0 flex-1 items-center gap-2 text-left text-sm">
+          <span className="text-slate-400">{open ? <ChevronDown size={16} /> : <ChevronRight size={16} />}</span>
+          <span className="min-w-0 flex-1">
+            <span className="font-bold">{rubric.title}</span>{" "}
+            <span className="text-xs text-slate-500">
+              {(rubric.items ?? []).length} criteria • /{max} • used by {usage.length} evaluation{usage.length === 1 ? "" : "s"}
+            </span>
           </span>
-        </span>
-      </button>
+        </button>
+        <button
+          onClick={async () => {
+            if (!confirm(`Delete sheet "${rubric.title}"? Blocked while any evaluation uses it.`)) return;
+            try {
+              await (deleteRubric as any)({ token, rubricId: rubric._id });
+            } catch (err: any) {
+              setMsg(err?.message ?? "Error");
+            }
+          }}
+          className="shrink-0 rounded-full border px-2.5 py-1 text-xs text-red-600"
+        >
+          Delete
+        </button>
+      </div>
+      {msg && <p className="mt-1 text-xs font-bold text-red-600">{msg}</p>}
       {open && (
         <div className="mt-1.5 border-t pt-1.5 text-xs">
           {usage.length > 0 && (
@@ -1044,6 +1110,7 @@ function RubricRow({ token, rubric, usage }: { token: string; rubric: any; usage
 function EvalBuilder({ token, rubrics, days, activities, evals }: { token: string; rubrics: any[] | undefined; days: any[] | undefined; activities: any[] | undefined; evals: any[] | undefined }) {
   const upsertRubric = useMutation((api as any)?.grading?.upsertRubric);
   const upsertEvaluation = useMutation((api as any)?.grading?.upsertEvaluation);
+  const deleteEvaluation = useMutation((api as any)?.grading?.deleteEvaluation);
   const [rTitle, setRTitle] = useState("");
   const [rLines, setRLines] = useState("Logic & Execution | Sound program logic | 10\nPresentation | Clear demo | 10");
   const [eTitle, setETitle] = useState("");
@@ -1128,13 +1195,28 @@ function EvalBuilder({ token, rubrics, days, activities, evals }: { token: strin
         </p>
         <div className="mt-2 space-y-1.5">
           {evals?.map((e) => (
-            <div key={String(e._id)} className="rounded-xl border px-3 py-2 text-sm">
-              <p className="font-bold">{e.title}</p>
-              <p className="text-xs text-slate-500">
-                sheet: {rubricName(String(e.rubricId))} • {e.points} XP pool • {e.gradedCount} graded
-                {dayTag(e.dayId ? String(e.dayId) : undefined) ? ` • ${dayTag(e.dayId ? String(e.dayId) : undefined)}` : ""}
-                {actTag(e.activityId ? String(e.activityId) : undefined) ? ` • grades: ${actTag(e.activityId ? String(e.activityId) : undefined)}` : ""}
-              </p>
+            <div key={String(e._id)} className="flex items-center gap-2 rounded-xl border px-3 py-2 text-sm">
+              <div className="min-w-0 flex-1">
+                <p className="font-bold">{e.title}</p>
+                <p className="text-xs text-slate-500">
+                  sheet: {rubricName(String(e.rubricId))} • {e.points} XP pool • {e.gradedCount} graded
+                  {dayTag(e.dayId ? String(e.dayId) : undefined) ? ` • ${dayTag(e.dayId ? String(e.dayId) : undefined)}` : ""}
+                  {actTag(e.activityId ? String(e.activityId) : undefined) ? ` • grades: ${actTag(e.activityId ? String(e.activityId) : undefined)}` : ""}
+                </p>
+              </div>
+              <button
+                onClick={async () => {
+                  if (!confirm(`Delete "${e.title}"? Its grades and awarded XP go with it.`)) return;
+                  try {
+                    await (deleteEvaluation as any)({ token, evaluationId: e._id });
+                  } catch (err: any) {
+                    setMsg(err?.message ?? "Error");
+                  }
+                }}
+                className="shrink-0 rounded-full border px-2.5 py-1 text-xs text-red-600"
+              >
+                Delete
+              </button>
             </div>
           ))}
         </div>

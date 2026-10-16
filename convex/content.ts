@@ -140,6 +140,19 @@ export const deleteLecture = mutation({
   args: { token: v.string(), lectureId: v.id("lectures") },
   handler: async (ctx, args) => {
     await requireStaff(ctx, args.token);
+    // Cascade: completions + the XP they paid out.
+    const completions = await ctx.db.query("completions").collect();
+    for (const c of completions) {
+      if (c.lectureId && String(c.lectureId) === String(args.lectureId)) {
+        await ctx.db.delete(c._id);
+      }
+    }
+    const xp = await ctx.db.query("xpEvents").collect();
+    for (const e of xp) {
+      if (e.kind === "lecture" && e.refId === String(args.lectureId)) {
+        await ctx.db.delete(e._id);
+      }
+    }
     await ctx.db.delete(args.lectureId);
     return true;
   },
@@ -149,8 +162,145 @@ export const deleteActivity = mutation({
   args: { token: v.string(), activityId: v.id("activities") },
   handler: async (ctx, args) => {
     await requireStaff(ctx, args.token);
+    const completions = await ctx.db.query("completions").collect();
+    for (const c of completions) {
+      if (c.activityId && String(c.activityId) === String(args.activityId)) {
+        await ctx.db.delete(c._id);
+      }
+    }
+    const xp = await ctx.db.query("xpEvents").collect();
+    for (const e of xp) {
+      if (e.kind === "activity" && e.refId === String(args.activityId)) {
+        await ctx.db.delete(e._id);
+      }
+    }
+    // Unlink evaluations graded against this activity (their grades stand).
+    const evals = await ctx.db.query("evaluations").collect();
+    for (const e of evals) {
+      if (e.activityId && String(e.activityId) === String(args.activityId)) {
+        await ctx.db.patch(e._id, { activityId: undefined });
+      }
+    }
     await ctx.db.delete(args.activityId);
     return true;
+  },
+});
+
+// Orphan audit: rows pointing at deleted parents.
+export const auditOrphans = query({
+  args: { token: v.string() },
+  handler: async (ctx, args) => {
+    await requireStaff(ctx, args.token);
+    const [lectures, activities, quizzes, questions, users, evaluations, rubrics] =
+      await Promise.all([
+        ctx.db.query("lectures").collect(),
+        ctx.db.query("activities").collect(),
+        ctx.db.query("quizzes").collect(),
+        ctx.db.query("questions").collect(),
+        ctx.db.query("users").collect(),
+        ctx.db.query("evaluations").collect(),
+        ctx.db.query("rubrics").collect(),
+      ]);
+    const has = (rows: any[], id: any) => rows.some((r) => String(r._id) === String(id));
+    const completions = await ctx.db.query("completions").collect();
+    const xp = await ctx.db.query("xpEvents").collect();
+    const attempts = await ctx.db.query("attempts").collect();
+    const grades = await ctx.db.query("grades").collect();
+    const count = {
+      completions: completions.filter(
+        (c) =>
+          (c.lectureId && !has(lectures, c.lectureId)) ||
+          (c.activityId && !has(activities, c.activityId)) ||
+          !has(users, c.userId)
+      ).length,
+      lectureXp: xp.filter((e) => e.kind === "lecture" && !has(lectures, e.refId)).length,
+      activityXp: xp.filter((e) => e.kind === "activity" && !has(activities, e.refId)).length,
+      quizXp: xp.filter(
+        (e) => e.kind === "quiz" && !attempts.some((a) => String(a._id) === e.refId)
+      ).length,
+      evalXp: xp.filter(
+        (e) =>
+          e.kind === "evaluation" &&
+          (e.refId.startsWith("eval:")
+            ? !evaluations.some((ev) => `eval:${String(ev._id)}` === e.refId)
+            : !grades.some((g) => String(g._id) === e.refId))
+      ).length,
+      attempts: attempts.filter((a) => !quizzes.some((q) => String(q._id) === String(a.quizId))).length,
+      grades: grades.filter(
+        (g) =>
+          !evaluations.some((e) => String(e._id) === String(g.evaluationId)) ||
+          !has(users, g.userId)
+      ).length,
+      evaluations: evaluations.filter((e) => !rubrics.some((r) => String(r._id) === String(e.rubricId)))
+        .length,
+    };
+    return { ...count, total: Object.values(count).reduce((s, v) => s + v, 0) };
+  },
+});
+
+export const cleanupOrphans = mutation({
+  args: { token: v.string() },
+  handler: async (ctx, args) => {
+    await requireStaff(ctx, args.token);
+    const [lectures, activities, quizzes, users, evaluations] = await Promise.all([
+      ctx.db.query("lectures").collect(),
+      ctx.db.query("activities").collect(),
+      ctx.db.query("quizzes").collect(),
+      ctx.db.query("users").collect(),
+      ctx.db.query("evaluations").collect(),
+    ]);
+    const has = (rows: any[], id: any) => rows.some((r) => String(r._id) === String(id));
+    let deleted = 0;
+    const completions = await ctx.db.query("completions").collect();
+    for (const c of completions) {
+      if (
+        (c.lectureId && !has(lectures, c.lectureId)) ||
+        (c.activityId && !has(activities, c.activityId)) ||
+        !has(users, c.userId)
+      ) {
+        await ctx.db.delete(c._id);
+        deleted++;
+      }
+    }
+    const attempts = await ctx.db.query("attempts").collect();
+    const doomedAttempts = new Set<string>();
+    for (const a of attempts) {
+      if (!quizzes.some((q) => String(q._id) === String(a.quizId)) || !has(users, a.userId)) {
+        doomedAttempts.add(String(a._id));
+        await ctx.db.delete(a._id);
+        deleted++;
+      }
+    }
+    const grades = await ctx.db.query("grades").collect();
+    const doomedGrades = new Set<string>();
+    for (const g of grades) {
+      if (
+        !evaluations.some((e) => String(e._id) === String(g.evaluationId)) ||
+        !has(users, g.userId)
+      ) {
+        doomedGrades.add(String(g._id));
+        await ctx.db.delete(g._id);
+        deleted++;
+      }
+    }
+    const xp = await ctx.db.query("xpEvents").collect();
+    for (const e of xp) {
+      const orphan =
+        !has(users, e.userId) ||
+        (e.kind === "lecture" && !has(lectures, e.refId)) ||
+        (e.kind === "activity" && !has(activities, e.refId)) ||
+        (e.kind === "quiz" && !attempts.some((a) => String(a._id) === e.refId)) ||
+        (e.kind === "evaluation" &&
+          (doomedGrades.has(e.refId) ||
+            (e.refId.startsWith("eval:")
+              ? !evaluations.some((ev) => `eval:${String(ev._id)}` === e.refId)
+              : !grades.some((g) => String(g._id) === e.refId))));
+      if (orphan) {
+        await ctx.db.delete(e._id);
+        deleted++;
+      }
+    }
+    return { deleted };
   },
 });
 

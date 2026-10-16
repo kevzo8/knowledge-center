@@ -405,6 +405,45 @@ export const myGrades = query({
   },
 });
 
+export const deleteEvaluation = mutation({
+  args: { token: v.string(), evaluationId: v.id("evaluations") },
+  handler: async (ctx, args) => {
+    await requireStaff(ctx, args.token);
+    // Voiding an evaluation removes its grades and the XP they paid.
+    const grades = await ctx.db
+      .query("grades")
+      .withIndex("by_evaluation", (q) => q.eq("evaluationId", args.evaluationId))
+      .collect();
+    const gradeIds = new Set(grades.map((g) => String(g._id)));
+    for (const g of grades) await ctx.db.delete(g._id);
+    const evalKey = `eval:${String(args.evaluationId)}`;
+    const xp = await ctx.db.query("xpEvents").collect();
+    for (const e of xp) {
+      if (e.kind === "evaluation" && (e.refId === evalKey || gradeIds.has(e.refId))) {
+        await ctx.db.delete(e._id);
+      }
+    }
+    await ctx.db.delete(args.evaluationId);
+    return true;
+  },
+});
+
+export const deleteRubric = mutation({
+  args: { token: v.string(), rubricId: v.id("rubrics") },
+  handler: async (ctx, args) => {
+    await requireStaff(ctx, args.token);
+    const evals = await ctx.db.query("evaluations").collect();
+    const used = evals.filter((e) => String(e.rubricId) === String(args.rubricId));
+    if (used.length > 0) {
+      throw new Error(
+        `Sheet is used by ${used.length} evaluation(s): ${used.map((e) => e.title).join(", ")}`
+      );
+    }
+    await ctx.db.delete(args.rubricId);
+    return true;
+  },
+});
+
 // Manual XP adjustment (bonus or correction, negative allowed).
 export const grantBonus = mutation({
   args: { token: v.string(), username: v.string(), xp: v.number() },

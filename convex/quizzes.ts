@@ -153,7 +153,25 @@ export const deleteQuestion = mutation({
   args: { token: v.string(), questionId: v.id("questions") },
   handler: async (ctx, args) => {
     await requireStaff(ctx, args.token);
+    const q = await ctx.db.get(args.questionId);
+    if (!q) return true;
+    const quizId = q.quizId;
     await ctx.db.delete(args.questionId);
+    // Attempts scored against the old key are no longer valid — void them + their XP.
+    const attempts = await ctx.db.query("attempts").collect();
+    const doomed = new Set<string>();
+    for (const a of attempts) {
+      if (String(a.quizId) === String(quizId)) {
+        doomed.add(String(a._id));
+        await ctx.db.delete(a._id);
+      }
+    }
+    if (doomed.size > 0) {
+      const xp = await ctx.db.query("xpEvents").collect();
+      for (const e of xp) {
+        if (e.kind === "quiz" && doomed.has(e.refId)) await ctx.db.delete(e._id);
+      }
+    }
     return true;
   },
 });
@@ -167,6 +185,20 @@ export const deleteQuiz = mutation({
       .withIndex("by_quiz", (q) => q.eq("quizId", args.quizId))
       .collect();
     for (const q of qs) await ctx.db.delete(q._id);
+    const attempts = await ctx.db.query("attempts").collect();
+    const doomed = new Set<string>();
+    for (const a of attempts) {
+      if (String(a.quizId) === String(args.quizId)) {
+        doomed.add(String(a._id));
+        await ctx.db.delete(a._id);
+      }
+    }
+    if (doomed.size > 0) {
+      const xp = await ctx.db.query("xpEvents").collect();
+      for (const e of xp) {
+        if (e.kind === "quiz" && doomed.has(e.refId)) await ctx.db.delete(e._id);
+      }
+    }
     await ctx.db.delete(args.quizId);
     return true;
   },
