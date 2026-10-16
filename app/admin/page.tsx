@@ -643,8 +643,75 @@ function QuizCard({ token, quiz }: { token: string; quiz: any }) {
             ))}
             {full && questions.length === 0 && <p className="text-xs text-slate-500">No questions yet — add one above.</p>}
           </div>
+          {open && <AttemptReview token={token} quizId={String(quiz._id)} />}
         </div>
       )}
+    </div>
+  );
+}
+
+function AttemptReview({ token, quizId }: { token: string; quizId: string }) {
+  const [show, setShow] = useState(false);
+  const [openAtt, setOpenAtt] = useState<number | null>(null);
+  const data = useQuery(
+    (api as any)?.quizzes?.attemptsForQuiz,
+    show ? { token, quizId: quizId as any } : "skip"
+  ) as { questions: any[]; attempts: any[] } | undefined;
+
+  return (
+    <div className="mt-2 border-t pt-2">
+      <button onClick={() => setShow(!show)} className="rounded-full border px-3 py-1 text-xs font-bold">
+        {show ? "Hide attempts" : "Review attempts (answer key check)"}
+      </button>
+      {show && !data && <p className="mt-1 text-xs text-slate-500">Loading…</p>}
+      {show && data && data.attempts.length === 0 && (
+        <p className="mt-1 text-xs text-slate-500">Nobody has taken this quiz yet.</p>
+      )}
+      {show && data && data.attempts.length > 0 && (
+        <p className="mt-1 text-xs text-slate-500">
+          {data.attempts.length} attempt(s) — expand one to see every pick against the key.
+        </p>
+      )}
+      {show && data?.attempts.map((a, ai) => {
+        const pct = a.total ? Math.round((a.score / a.total) * 100) : 0;
+        const isOpen = openAtt === ai;
+        return (
+          <div key={ai} className="mt-1.5 rounded-xl border px-3 py-2 text-sm">
+            <button onClick={() => setOpenAtt(isOpen ? null : ai)} className="flex w-full items-center gap-2 text-left">
+              <span className="min-w-0 flex-1">
+                <span className="font-bold">{a.displayName}</span>{" "}
+                <span className="font-mono text-xs text-slate-500">
+                  @{a.username} • {new Date(a.at).toLocaleDateString()}
+                </span>
+              </span>
+              <span className={`rounded-full px-2.5 py-0.5 font-mono text-xs font-black ${pct >= 80 ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-200" : pct >= 60 ? "bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-200" : "bg-red-100 text-red-800 dark:bg-red-950/60 dark:text-red-200"}`}>
+                {a.score}/{a.total} ({pct}%)
+              </span>
+            </button>
+            {isOpen && (
+              <ol className="mt-1.5 space-y-1.5 border-t pt-1.5 text-xs">
+                {data.questions.map((q: any, qi: number) => {
+                  const picked = a.answers?.[qi];
+                  const ok = picked === q.answerIndex;
+                  return (
+                    <li key={qi} className={`rounded-lg px-2 py-1.5 ${ok ? "bg-emerald-50 dark:bg-emerald-950/40" : "bg-red-50 dark:bg-red-950/40"}`}>
+                      <p className="font-bold">
+                        {qi + 1}. {q.prompt}
+                      </p>
+                      <p className="mt-0.5">
+                        Picked: <b>{picked === undefined || picked === null ? "—" : `${String.fromCharCode(65 + picked)} – ${q.choices[picked] ?? "?"}`}</b>
+                        {!ok && (
+                          <span> · Key: <b className="text-emerald-700 dark:text-emerald-300">{String.fromCharCode(65 + q.answerIndex)} – {q.choices[q.answerIndex]}</b></span>
+                        )}
+                      </p>
+                    </li>
+                  );
+                })}
+              </ol>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -725,6 +792,9 @@ function QuestionRow({ token, quizId, q }: { token: string; quizId: string; q: a
     <div className="rounded-xl border px-3 py-2 text-sm">
       <div className="flex items-center gap-2">
         <span className="min-w-0 flex-1 font-bold">{q.prompt} <span className="font-normal text-slate-500">#{q.order}</span></span>
+        <span className="shrink-0 rounded-md bg-emerald-600 px-1.5 py-0.5 font-mono text-[11px] font-black text-white" title="Answer key">
+          {String.fromCharCode(65 + q.answerIndex)}
+        </span>
         <button onClick={() => setEditing(true)} className="rounded-full border px-2.5 py-1 text-xs font-bold">Edit</button>
         <button
           onClick={async () => {
@@ -738,7 +808,8 @@ function QuestionRow({ token, quizId, q }: { token: string; quizId: string; q: a
       <ul className="mt-1 space-y-0.5 text-xs">
         {q.choices.map((c: string, i: number) => (
           <li key={i} className={`flex items-center gap-1.5 rounded-lg px-2 py-1 ${i === q.answerIndex ? "bg-emerald-100 font-bold text-emerald-900 dark:bg-emerald-950/60 dark:text-emerald-200" : "text-slate-500"}`}>
-            {i === q.answerIndex ? <Check size={12} /> : <span className="w-3 text-center font-mono">{i}</span>}
+            <span className="w-4 shrink-0 text-center font-mono font-bold">{String.fromCharCode(65 + i)}</span>
+            {i === q.answerIndex && <Check size={12} />}
             {c}
           </li>
         ))}

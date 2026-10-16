@@ -162,6 +162,37 @@ export const deleteQuiz = mutation({
   },
 });
 
+// Staff: every attempt on a quiz, with who answered what.
+export const attemptsForQuiz = query({
+  args: { token: v.string(), quizId: v.id("quizzes") },
+  handler: async (ctx, args) => {
+    await requireStaff(ctx, args.token);
+    const questions = await ctx.db
+      .query("questions")
+      .withIndex("by_quiz", (q) => q.eq("quizId", args.quizId))
+      .collect();
+    const order = questions
+      .sort((a, b) => a.order - b.order)
+      .map((q) => ({ prompt: q.prompt, choices: q.choices, answerIndex: q.answerIndex }));
+    const attempts = await ctx.db.query("attempts").collect();
+    const mine = attempts.filter((a) => String(a.quizId) === String(args.quizId));
+    const out = [];
+    for (const a of mine.sort((x, y) => y.createdAt - x.createdAt)) {
+      const u = await ctx.db.get(a.userId);
+      if (!u) continue;
+      out.push({
+        username: u.username,
+        displayName: u.displayName,
+        score: a.score,
+        total: a.total,
+        answers: a.answers,
+        at: a.createdAt,
+      });
+    }
+    return { questions: order, attempts: out };
+  },
+});
+
 // ---------- Attempts + XP ----------
 export const submitQuiz = mutation({
   args: {
