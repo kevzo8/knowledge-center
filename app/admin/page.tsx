@@ -1457,8 +1457,9 @@ function GradebookPanel({ token }: { token: string }) {
   }
 
   const th = (label: string, title: string, key: string) => (
-    <th key={key} title={title} onClick={() => toggle(key)} className="cursor-pointer whitespace-nowrap px-2 py-2 pr-3 select-none hover:text-indigo-600">
-      {label} {sortKey === key ? (dir === 1 ? "▲" : "▼") : ""}
+    <th key={key} title={title} onClick={() => toggle(key)} className="w-16 cursor-pointer whitespace-nowrap px-1 py-2 text-center select-none hover:text-indigo-600">
+      <span className="block truncate">{label}</span>
+      <span>{sortKey === key ? (dir === 1 ? "▲" : "▼") : ""}</span>
     </th>
   );
 
@@ -1478,11 +1479,12 @@ function GradebookPanel({ token }: { token: string }) {
       <h2 className="font-bold">Gradebook — click any column to sort</h2>
       <p className="text-xs text-slate-500">Best quiz score per trainee · panel average per evaluation · activities completed.</p>
       <div className="mt-2 overflow-x-auto">
-        <table className="w-full min-w-[720px] text-left text-sm">
+        <table className="w-full table-fixed text-left text-sm">
           <thead>
             <tr className="text-[11px] uppercase tracking-widest text-slate-500">
-              <th onClick={() => toggle("name")} className="sticky left-0 cursor-pointer bg-white px-2 py-2 pr-3 select-none dark:bg-[#161c2a]">
-                Trainee {sortKey === "name" ? (dir === 1 ? "▲" : "▼") : ""}
+              <th onClick={() => toggle("name")} className="sticky left-0 w-44 cursor-pointer bg-white px-2 py-2 pr-3 select-none dark:bg-[#161c2a]">
+                <span className="block truncate">Trainee</span>
+                <span>{sortKey === "name" ? (dir === 1 ? "▲" : "▼") : ""}</span>
               </th>
               {cols.map((c) => th(c.label, c.full, c.key))}
             </tr>
@@ -1490,15 +1492,15 @@ function GradebookPanel({ token }: { token: string }) {
           <tbody>
             {ordered.map((t: any) => (
               <tr key={t.username} className="border-t">
-                <td className="sticky left-0 bg-white px-2 py-2 pr-3 dark:bg-[#161c2a]">
-                  <p className="font-bold">{t.displayName}</p>
-                  <p className="font-mono text-xs text-slate-500">@{t.username}</p>
+                <td className="sticky left-0 w-44 bg-white px-2 py-2 pr-3 dark:bg-[#161c2a]">
+                  <p className="truncate font-bold">{t.displayName}</p>
+                  <p className="truncate font-mono text-xs text-slate-500">@{t.username}</p>
                 </td>
                 {cols.map((c) =>
                   c.key === "act" ? (
-                    <td key={c.key} className="px-2 py-2 font-mono font-bold">{cells[t.username]?.activitiesDone ?? 0}</td>
+                    <td key={c.key} className="px-1 py-2 text-center font-mono font-bold">{cells[t.username]?.activitiesDone ?? 0}</td>
                   ) : (
-                    <td key={c.key} className="px-2 py-2">{cell(c.get(t.username))}</td>
+                    <td key={c.key} className="px-1 py-2 text-center">{cell(c.get(t.username))}</td>
                   )
                 )}
               </tr>
