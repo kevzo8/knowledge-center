@@ -9,7 +9,7 @@ import { Check, ChevronDown, ChevronRight, ExternalLink, Paperclip, RefreshCw, S
 
 export default function Admin() {
   const { token, me, loading } = useMe();
-  const [tab, setTab] = useState<"users" | "days" | "activities" | "quiz" | "overview" | "grading" | "inbox">("users");
+  const [tab, setTab] = useState<"users" | "days" | "activities" | "quiz" | "overview" | "grading" | "gradebook" | "inbox">("users");
   const unread = useQuery(
     (api as any)?.feedback?.openCount,
     token ? { token } : "skip"
@@ -42,13 +42,13 @@ export default function Admin() {
         </div>
       </div>
       <div className="mt-4 flex flex-wrap gap-2">
-        {(["users", "days", "activities", "quiz", "overview", "grading", "inbox"] as const).map((t) => (
+        {(["users", "days", "activities", "quiz", "overview", "grading", "gradebook", "inbox"] as const).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
             className={`rounded-full px-4 py-2 text-sm font-bold ${tab === t ? "btn-primary" : "border"}`}
           >
-            {t === "users" ? "Users" : t === "days" ? "Days & lectures" : t === "activities" ? "Activities" : t === "quiz" ? "Quizzes" : t === "overview" ? "Trainees" : t === "grading" ? "Grading" : `Inbox${unread ? ` (${unread})` : ""}`}
+            {t === "users" ? "Users" : t === "days" ? "Days & lectures" : t === "activities" ? "Activities" : t === "quiz" ? "Quizzes" : t === "overview" ? "Trainees" : t === "grading" ? "Grading" : t === "gradebook" ? "Gradebook" : `Inbox${unread ? ` (${unread})` : ""}`}
           </button>
         ))}
       </div>
@@ -60,6 +60,7 @@ export default function Admin() {
         {tab === "quiz" && <QuizPanel token={token} />}
         {tab === "overview" && <OverviewPanel token={token} isAdmin={me.role === "admin"} />}
         {tab === "grading" && <GradingPanel token={token} meUsername={me.username} />}
+        {tab === "gradebook" && <GradebookPanel token={token} />}
         {tab === "inbox" && <InboxPanel token={token} />}
       </div>
     </main>
@@ -1403,6 +1404,109 @@ function GradeEntry({ token, evaluationId, meUsername }: { token: string; evalua
       })}
       {msg && <p className="text-xs">{msg}</p>}
     </div>
+  );
+}
+
+function GradebookPanel({ token }: { token: string }) {
+  const data = useQuery((api as any)?.grading?.gradebook, { token }) as any;
+  const [sortKey, setSortKey] = useState("name");
+  const [dir, setDir] = useState<1 | -1>(1);
+
+  if (!data) return <p className="text-sm text-slate-500">Loading gradebook…</p>;
+  const { trainees, quizzes, evaluations, cells } = data;
+  if (trainees.length === 0) return <p className="text-sm text-slate-500">No trainees yet.</p>;
+
+  type Col = { key: string; label: string; full: string; get: (u: string) => number | null };
+  const cols: Col[] = [
+    ...quizzes.map((q: any) => ({
+      key: `q:${q.id}`,
+      label: q.title.replace(/^Quiz:\s*/i, "").slice(0, 16),
+      full: q.title,
+      get: (u: string) => cells[u]?.quiz[q.id] ?? null,
+    })),
+    ...evaluations.map((e: any) => ({
+      key: `e:${e.id}`,
+      label: e.title.slice(0, 18),
+      full: e.title,
+      get: (u: string) => cells[u]?.eval[e.id] ?? null,
+    })),
+    { key: "act", label: "Act ✓", full: "Activities completed", get: (u: string) => cells[u]?.activitiesDone ?? 0 },
+  ];
+
+  function val(u: string, key: string): number | string | null {
+    if (key === "name") return trainees.find((t: any) => t.username === u)?.displayName ?? u;
+    return cols.find((c) => c.key === key)?.get(u) ?? null;
+  }
+
+  const ordered = [...trainees].sort((a: any, b: any) => {
+    const va = sortKey === "name" ? a.displayName : val(a.username, sortKey);
+    const vb = sortKey === "name" ? b.displayName : val(b.username, sortKey);
+    if (va === null && vb === null) return a.displayName.localeCompare(b.displayName);
+    if (va === null) return 1;
+    if (vb === null) return -1;
+    if (typeof va === "string") return dir * va.localeCompare(vb as string);
+    return dir * ((va as number) - (vb as number));
+  });
+
+  function toggle(key: string) {
+    if (sortKey === key) setDir(dir === 1 ? -1 : 1);
+    else {
+      setSortKey(key);
+      setDir(key === "name" ? 1 : -1);
+    }
+  }
+
+  const th = (label: string, title: string, key: string) => (
+    <th key={key} title={title} onClick={() => toggle(key)} className="cursor-pointer whitespace-nowrap px-2 py-2 pr-3 select-none hover:text-indigo-600">
+      {label} {sortKey === key ? (dir === 1 ? "▲" : "▼") : ""}
+    </th>
+  );
+
+  const cell = (v: number | null) => {
+    if (v === null) return <span className="text-slate-300 dark:text-slate-600">—</span>;
+    const cls =
+      v >= 80
+        ? "bg-emerald-100 text-emerald-900 dark:bg-emerald-950/60 dark:text-emerald-200"
+        : v >= 60
+          ? "bg-amber-100 text-amber-900 dark:bg-amber-950/60 dark:text-amber-200"
+          : "bg-red-100 text-red-900 dark:bg-red-950/60 dark:text-red-200";
+    return <span className={`rounded-md px-1.5 py-0.5 font-mono font-bold ${cls}`}>{v}%</span>;
+  };
+
+  return (
+    <section className="rounded-2xl border bg-white p-4">
+      <h2 className="font-bold">Gradebook — click any column to sort</h2>
+      <p className="text-xs text-slate-500">Best quiz score per trainee · panel average per evaluation · activities completed.</p>
+      <div className="mt-2 overflow-x-auto">
+        <table className="w-full min-w-[720px] text-left text-sm">
+          <thead>
+            <tr className="text-[11px] uppercase tracking-widest text-slate-500">
+              <th onClick={() => toggle("name")} className="sticky left-0 cursor-pointer bg-white px-2 py-2 pr-3 select-none dark:bg-[#161c2a]">
+                Trainee {sortKey === "name" ? (dir === 1 ? "▲" : "▼") : ""}
+              </th>
+              {cols.map((c) => th(c.label, c.full, c.key))}
+            </tr>
+          </thead>
+          <tbody>
+            {ordered.map((t: any) => (
+              <tr key={t.username} className="border-t">
+                <td className="sticky left-0 bg-white px-2 py-2 pr-3 dark:bg-[#161c2a]">
+                  <p className="font-bold">{t.displayName}</p>
+                  <p className="font-mono text-xs text-slate-500">@{t.username}</p>
+                </td>
+                {cols.map((c) =>
+                  c.key === "act" ? (
+                    <td key={c.key} className="px-2 py-2 font-mono font-bold">{cells[t.username]?.activitiesDone ?? 0}</td>
+                  ) : (
+                    <td key={c.key} className="px-2 py-2">{cell(c.get(t.username))}</td>
+                  )
+                )}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
   );
 }
 

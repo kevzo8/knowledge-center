@@ -5,14 +5,18 @@ import { useMe } from "../../lib/useMe";
 import { clearToken } from "../../lib/auth-token";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import ProgressSection from "../../components/ProgressSection";
 import StaffOverview from "../../components/StaffOverview";
 import ThemeToggle from "../../components/ThemeToggle";
 import { CalendarDays, Inbox, Settings, Trophy } from "lucide-react";
 
+type BoardTab = "xp" | "quiz" | "panel" | "activities";
+
 export default function Dashboard() {
   const { token, me, loading } = useMe();
   const router = useRouter();
+  const [boardTab, setBoardTab] = useState<BoardTab>("xp");
   const stats = useQuery(
     (api as any)?.quizzes?.myStats,
     token ? { token } : "skip"
@@ -21,6 +25,10 @@ export default function Dashboard() {
     (api as any)?.quizzes?.leaderboard,
     token ? { token, limit: 10 } : "skip"
   ) as any[];
+  const standings = useQuery(
+    (api as any)?.quizzes?.standings,
+    token ? { token } : "skip"
+  ) as any[] | undefined;
 
   if (loading) return <p className="p-10 text-center text-sm">Loading…</p>;
   if (!token || !me)
@@ -131,57 +139,99 @@ export default function Dashboard() {
         <h2 className="flex items-center gap-1.5 text-sm font-bold uppercase tracking-widest">
           <Trophy size={15} /> Leaderboard — top trainees
         </h2>
-        {!board && <p className="mt-2 text-sm text-slate-500">Loading…</p>}
-        {board && board.length === 0 && (
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {(
+            [
+              ["xp", "XP"],
+              ["quiz", "Quizzes"],
+              ["panel", "Panels"],
+              ["activities", "Activities"],
+            ] as [BoardTab, string][]
+          ).map(([t, label]) => (
+            <button
+              key={t}
+              onClick={() => setBoardTab(t)}
+              className={`rounded-full px-4 py-1.5 text-xs font-bold ${boardTab === t ? "btn-primary" : "border"}`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        {!standings && <p className="mt-2 text-sm text-slate-500">Loading…</p>}
+        {standings && standings.length === 0 && (
           <p className="mt-2 text-sm text-slate-500">
             No XP yet — finish a lecture or quiz to get on the board.
           </p>
         )}
-        {board && board.length > 0 && (
-          <div className="mt-2">
-            <div className="grid gap-2 sm:grid-cols-3">
-              {board.slice(0, 3).map((r, i) => (
-                <div
-                  key={r.username}
-                  className={`card-lift rounded-2xl border bg-white p-4 text-center ${
-                    r.username === user.username ? "border-indigo-400 ring-1 ring-indigo-300 dark:border-indigo-500 dark:ring-indigo-700" : ""
-                  }`}
-                >
-                  <span
-                    className={`mx-auto flex h-9 w-9 items-center justify-center rounded-full text-sm font-black ${
-                      [
-                        "bg-amber-300 text-amber-950 dark:bg-amber-500/30 dark:text-amber-200",
-                        "bg-slate-300 text-slate-800 dark:bg-slate-500/30 dark:text-slate-200",
-                        "bg-orange-300 text-orange-950 dark:bg-orange-500/30 dark:text-orange-200",
-                      ][i]
-                    }`}
-                  >
-                    {i + 1}
-                  </span>
-                  <p className="mt-1 truncate font-bold">{r.displayName}</p>
-                  <p className="font-mono text-xs text-slate-500">Lv{r.level} • {r.xp} XP</p>
-                </div>
-              ))}
-            </div>
-            {board.length > 3 && (
-              <div className="mt-2 space-y-1.5">
-                {board.slice(3).map((r, i) => (
-                  <div
-                    key={r.username}
-                    className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-sm ${
-                      r.username === user.username ? "bg-indigo-50 border-indigo-300 dark:bg-indigo-950/60 dark:border-indigo-700" : "bg-white"
-                    }`}
-                  >
-                    <span className="w-8 font-black">#{i + 4}</span>
-                    <span className="flex-1 truncate font-semibold">{r.displayName}</span>
-                    <span className="font-mono text-xs">Lv{r.level} • {r.xp}xp</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+        {standings && standings.length > 0 && (
+          <BoardList tab={boardTab} rows={standings} username={user.username} />
         )}
       </section>
     </main>
+  );
+}
+
+function BoardList({ tab, rows, username }: { tab: BoardTab; rows: any[]; username: string }) {
+  const sorted = [...rows].sort((a, b) => {
+    if (tab === "xp") return b.totalXp - a.totalXp;
+    if (tab === "activities") return b.activitiesDone - a.activitiesDone || b.totalXp - a.totalXp;
+    const av = tab === "quiz" ? a.quizAvg : a.evalAvg;
+    const bv = tab === "quiz" ? b.quizAvg : b.evalAvg;
+    if (av === null && bv === null) return b.totalXp - a.totalXp;
+    if (av === null) return 1;
+    if (bv === null) return -1;
+    return bv - av;
+  });
+  const metric = (r: any) => {
+    if (tab === "xp") return `Lv${r.level} • ${r.totalXp} XP`;
+    if (tab === "quiz") return r.quizAvg !== null ? `${r.quizAvg}% avg • ${r.quizzesTaken} taken` : "no quizzes yet";
+    if (tab === "panel") return r.evalAvg !== null ? `${r.evalAvg}% avg • ${r.evalsGraded} graded` : "not graded yet";
+    return `${r.activitiesDone} done • ${r.lecturesDone} lectures`;
+  };
+  const top = sorted.slice(0, 3);
+  const rest = sorted.slice(3, 10);
+  return (
+    <div className="mt-2">
+      <div className="grid gap-2 sm:grid-cols-3">
+        {top.map((r, i) => (
+          <div
+            key={r.username}
+            className={`card-lift rounded-2xl border bg-white p-4 text-center ${
+              r.username === username ? "border-indigo-400 ring-1 ring-indigo-300 dark:border-indigo-500 dark:ring-indigo-700" : ""
+            }`}
+          >
+            <span
+              className={`mx-auto flex h-9 w-9 items-center justify-center rounded-full text-sm font-black ${
+                [
+                  "bg-amber-300 text-amber-950 dark:bg-amber-500/30 dark:text-amber-200",
+                  "bg-slate-300 text-slate-800 dark:bg-slate-500/30 dark:text-slate-200",
+                  "bg-orange-300 text-orange-950 dark:bg-orange-500/30 dark:text-orange-200",
+                ][i]
+              }`}
+            >
+              {i + 1}
+            </span>
+            <p className="mt-1 truncate font-bold">{r.displayName}</p>
+            <p className="font-mono text-xs text-slate-500">{metric(r)}</p>
+          </div>
+        ))}
+      </div>
+      {rest.length > 0 && (
+        <div className="mt-2 space-y-1.5">
+          {rest.map((r, i) => (
+            <div
+              key={r.username}
+              className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-sm ${
+                r.username === username ? "bg-indigo-50 border-indigo-300 dark:bg-indigo-950/60 dark:border-indigo-700" : "bg-white"
+              }`}
+            >
+              <span className="w-8 font-black">#{i + 4}</span>
+              <span className="flex-1 truncate font-semibold">{r.displayName}</span>
+              <span className="font-mono text-xs">{metric(r)}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
