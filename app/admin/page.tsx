@@ -9,7 +9,7 @@ import { Check, ChevronDown, ChevronRight, ExternalLink, Paperclip, RefreshCw, S
 
 export default function Admin() {
   const { token, me, loading } = useMe();
-  const [tab, setTab] = useState<"users" | "days" | "activities" | "quiz" | "overview" | "grading" | "gradebook" | "inbox">("users");
+  const [tab, setTab] = useState<"users" | "days" | "activities" | "quiz" | "overview" | "grading" | "gradebook" | "inbox">("gradebook");
   const unread = useQuery(
     (api as any)?.feedback?.openCount,
     token ? { token } : "skip"
