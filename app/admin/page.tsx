@@ -1007,7 +1007,8 @@ function OverviewPanel({ token, isAdmin }: { token: string; isAdmin: boolean }) 
           <TraineeRow key={r.username} token={token} row={r} isAdmin={isAdmin} />
         ))}
       </div>
-    </section>
+      </section>
+    </>
   );
 }
 
