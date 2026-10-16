@@ -450,6 +450,71 @@ export const leaderboard = query({
   },
 });
 
+// Per-trainee standings for category leaderboards (XP, quizzes, panels, activities).
+export const standings = query({
+  args: { token: v.string() },
+  handler: async (ctx, args) => {
+    const me = await getSessionUserOrNull(ctx, args.token);
+    if (!me) return [];
+    const users = (await ctx.db.query("users").collect()).filter(
+      (x) => x.active && x.role === "trainee"
+    );
+    const rows = [];
+    for (const u of users) {
+      const xpRows = await ctx.db
+        .query("xpEvents")
+        .withIndex("by_user", (q) => q.eq("userId", u._id))
+        .collect();
+      const totalXp = xpRows.reduce((s, r) => s + r.xp, 0);
+      const attempts = await ctx.db
+        .query("attempts")
+        .withIndex("by_user", (q) => q.eq("userId", u._id))
+        .collect();
+      const best: Record<string, number> = {};
+      for (const a of attempts) {
+        const k = String(a.quizId);
+        const pct = a.total ? Math.round((a.score / a.total) * 100) : 0;
+        best[k] = Math.max(best[k] ?? 0, pct);
+      }
+      const qa = Object.values(best);
+      const quizAvg = qa.length ? Math.round(qa.reduce((s, v) => s + v, 0) / qa.length) : null;
+      const completions = await ctx.db
+        .query("completions")
+        .withIndex("by_user", (q) => q.eq("userId", u._id))
+        .collect();
+      const grades = await ctx.db
+        .query("grades")
+        .withIndex("by_user", (q) => q.eq("userId", u._id))
+        .collect();
+      const byEval = new Map<string, number[]>();
+      for (const g of grades) {
+        const k = String(g.evaluationId);
+        if (!byEval.has(k)) byEval.set(k, []);
+        byEval.get(k)!.push(g.percent);
+      }
+      const perEval = [...byEval.values()].map(
+        (list) => list.reduce((s, v) => s + v, 0) / list.length
+      );
+      const evalAvg = perEval.length
+        ? Math.round(perEval.reduce((s, v) => s + v, 0) / perEval.length)
+        : null;
+      rows.push({
+        username: u.username,
+        displayName: u.displayName,
+        totalXp,
+        level: levelForXp(totalXp),
+        quizAvg,
+        quizzesTaken: attempts.length,
+        evalAvg,
+        evalsGraded: grades.length,
+        activitiesDone: completions.filter((c) => c.activityId).length,
+        lecturesDone: completions.filter((c) => c.lectureId).length,
+      });
+    }
+    return rows;
+  },
+});
+
 // Which lectures/activities the logged-in user already completed.
 export const myCompletions = query({
   args: { token: v.string() },

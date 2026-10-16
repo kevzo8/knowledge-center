@@ -369,6 +369,63 @@ export const traineeOverview = query({
   },
 });
 
+// Gradebook matrix: every trainee x every quiz/evaluation.
+export const gradebook = query({
+  args: { token: v.string() },
+  handler: async (ctx, args) => {
+    await requireStaff(ctx, args.token);
+    const trainees = (await ctx.db.query("users").collect())
+      .filter((u) => u.active && u.role === "trainee")
+      .map((u) => ({ id: u._id, username: u.username, displayName: u.displayName }))
+      .sort((a, b) => a.displayName.localeCompare(b.displayName));
+    const quizzes = (await ctx.db.query("quizzes").collect()).map((q) => ({
+      id: String(q._id),
+      title: q.title,
+    }));
+    const evaluations = (await ctx.db.query("evaluations").collect()).map((e) => ({
+      id: String(e._id),
+      title: e.title,
+    }));
+    const attempts = await ctx.db.query("attempts").collect();
+    const grades = await ctx.db.query("grades").collect();
+    const completions = await ctx.db.query("completions").collect();
+    const cells: Record<string, { quiz: Record<string, number | null>; eval: Record<string, number | null>; activitiesDone: number; lecturesDone: number }> = {};
+    for (const t of trainees) {
+      const qa: Record<string, number | null> = {};
+      for (const q of quizzes) {
+        const mine = attempts.filter(
+          (a) => String(a.userId) === String(t.id) && String(a.quizId) === q.id
+        );
+        qa[q.id] =
+          mine.length > 0
+            ? Math.max(...mine.map((a) => (a.total ? Math.round((a.score / a.total) * 100) : 0)))
+            : null;
+      }
+      const ev: Record<string, number | null> = {};
+      for (const e of evaluations) {
+        const mine = grades.filter(
+          (g) => String(g.userId) === String(t.id) && String(g.evaluationId) === e.id
+        );
+        ev[e.id] =
+          mine.length > 0
+            ? Math.round(mine.reduce((s, g) => s + g.percent, 0) / mine.length)
+            : null;
+      }
+      cells[t.username] = {
+        quiz: qa,
+        eval: ev,
+        activitiesDone: completions.filter(
+          (c) => String(c.userId) === String(t.id) && c.activityId
+        ).length,
+        lecturesDone: completions.filter(
+          (c) => String(c.userId) === String(t.id) && c.lectureId
+        ).length,
+      };
+    }
+    return { trainees, quizzes, evaluations, cells };
+  },
+});
+
 // ---------- Trainee: my own panel grades ----------
 export const myGrades = query({
   args: { token: v.string() },

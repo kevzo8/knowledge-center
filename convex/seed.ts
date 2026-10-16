@@ -618,6 +618,39 @@ export const addWeek1Question = mutation({
   },
 });
 
+// One-time: keep only the earliest attempt per (user, quiz); drop later
+// tries and the XP they paid. The one-attempt lock prevents new ones.
+export const dedupeAttempts = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const all = await ctx.db.query("attempts").collect();
+    const byKey = new Map<string, any[]>();
+    for (const a of all) {
+      const k = `${a.userId}:${a.quizId}`;
+      if (!byKey.has(k)) byKey.set(k, []);
+      byKey.get(k)!.push(a);
+    }
+    let removedAttempts = 0;
+    let removedXp = 0;
+    for (const list of byKey.values()) {
+      if (list.length < 2) continue;
+      const sorted = [...list].sort((a, b) => a.createdAt - b.createdAt);
+      for (const extra of sorted.slice(1)) {
+        await ctx.db.delete(extra._id);
+        removedAttempts++;
+        const xp = await ctx.db.query("xpEvents").collect();
+        for (const e of xp) {
+          if (e.kind === "quiz" && e.refId === String(extra._id)) {
+            removedXp += e.xp;
+            await ctx.db.delete(e._id);
+          }
+        }
+      }
+    }
+    return { removedAttempts, removedXp };
+  },
+});
+
 export const ensureAdmin = mutation({
   args: { username: v.string(), password: v.string(), displayName: v.string() },
   handler: async (ctx, args) => {

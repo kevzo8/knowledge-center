@@ -65,7 +65,12 @@ export default function DayPage({ params }: { params: Promise<{ dayId: string }>
     <main className="mx-auto max-w-5xl px-5 py-8">
       <div className="flex items-center justify-between gap-2">
         <Link href="/" className="text-sm underline">← All days</Link>
-        <ThemeToggle />
+        <div className="flex items-center gap-2">
+          <Link href="/dashboard" className="rounded-full border bg-white px-4 py-2 text-xs font-bold">
+            Dashboard
+          </Link>
+          <ThemeToggle />
+        </div>
       </div>
       {msg && (
         <p className="mt-2 flex items-center gap-1.5 rounded-xl border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm font-bold text-emerald-800 dark:border-emerald-700 dark:bg-emerald-950/70 dark:text-emerald-200">
