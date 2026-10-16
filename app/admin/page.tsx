@@ -5,7 +5,7 @@ import { useMe } from "../../lib/useMe";
 import { useState } from "react";
 import Link from "next/link";
 import ThemeToggle from "../../components/ThemeToggle";
-import { Check, ChevronDown, ChevronRight, ExternalLink, Paperclip, RefreshCw, Upload } from "lucide-react";
+import { Check, ChevronDown, ChevronRight, ExternalLink, Paperclip, RefreshCw, ShieldCheck, Upload } from "lucide-react";
 
 export default function Admin() {
   const { token, me, loading } = useMe();
