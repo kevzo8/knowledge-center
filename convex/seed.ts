@@ -308,6 +308,283 @@ export const normalizeQuizPoints = mutation({
   },
 });
 
+const TITLE = "Exam: Foundations Final (Days 1–6) — 50 items";
+
+// 50 questions: [prompt, choices[4], answerIndex]. 1 pt each, pool decides XP.
+const ITEMS: [string, string[], number][] = [
+  // ---- Day 1 readings & careers (1-8) ----
+  ["Curriculum ’68 splits computer science into three major divisions. Which set is correct?",
+    ["Hardware, software, and networks",
+     "Information structures and processes; information processing systems; methodologies",
+     "Input, processing, output, and storage",
+     "Data, code, users, and manuals"], 1],
+  ["In Curriculum ’68, Course B1 (Introduction to Computing) is built around what idea?",
+["Algorithms first, one language done well, substantial problems to solve",
+     "Mastering machine language on one specific computer",
+     "Memorizing operating-system commands",
+     "Assembling computers from parts"], 0],
+  ["About how many semester hours did Curriculum ’68 recommend for the undergraduate CS major?",
+    ["12 hours", "22 hours", "30 hours", "60 hours"], 2],
+  ["Salton (1969) describes the information lifecycle. What is the correct order?",
+["Retrieve, organize, produce, analyze, transmit",
+     "Analyze, produce, transmit, retrieve, organize",
+     "Transmit, produce, retrieve, organize, analyze",
+     "Produce, analyze, organize, transmit, retrieve"], 3],
+  ["Salton divides information science into three parts. Which set matches?",
+["Hardware, software, networks",
+     "Input, output, and storage",
+     "Data structures and languages; multi-user organization; text processing and retrieval",
+     "Analysis, design, and testing"], 2],
+  ["Mara interviews staff to map information needs; Jolo turns those specs into a hardware and software plan. Who is who?",
+    ["Mara: Designer, Jolo: Analyst",
+     "Mara: Analyst, Jolo: Designer",
+     "Both are Programmers",
+     "Both are Project Leaders"], 1],
+  ["IS ’72 models development as an iterated process. What is the correct phase order?",
+["Design, analysis, operation, implementation",
+     "Operation, implementation, design, analysis",
+     "Implementation, operation, analysis, design",
+     "Analysis, design, implementation, operation"], 3],
+  ["According to IS ’72, which position virtually requires combining analysis AND design backgrounds?",
+    ["Programmer", "Configurator", "Project Leader", "Computer Operator"], 2],
+  // ---- SDLC / Agile / Scrum (9-16) ----
+  ["What is system integration?",
+["Bringing subsystem parts into one coordinated whole that delivers the overarching function",
+     "Writing a single program from scratch",
+     "Buying faster hardware for the team",
+     "Training users on new software"], 0],
+  ["Which statement is an Agile Manifesto value?",
+["Processes and tools over individuals and interactions",
+     "Following a plan over responding to change",
+     "Contract negotiation over customer collaboration",
+     "Working software over comprehensive documentation"], 3],
+  ["A government contract has frozen specs, strictly linear phases, and no going back. Which methodology fits?",
+    ["Waterfall", "Agile", "Scrum", "Kanban"], 0],
+  ["In this program sprints run 2 weeks. What is the general Scrum rule for sprint length?",
+    ["1 day", "2 weeks", "1 month or less", "6 months"], 2],
+  ["Which backlog holds ONLY the current sprint's selected items plus the plan to deliver them?",
+    ["Product Backlog", "Definition of Done", "Increment", "Sprint Backlog"], 3],
+  ["A finished Increment must adhere to what?",
+    ["The Sprint Goal", "The Product Backlog", "The Definition of Done", "The user story template"], 2],
+  ["A team spends a full hour debugging code inside the Daily Scrum. What is wrong?",
+    ["Nothing, that is the point of the meeting",
+     "The Daily Scrum is a 15-minute sync, not a problem-solving session",
+     "Only stakeholders may speak in it",
+     "It should happen once a week"], 1],
+  ["Who speaks for the stakeholders and guides the product goal?",
+    ["Scrum Master", "Tech Lead", "Product Owner", "QA Tester"], 2],
+  // ---- Basic computer concepts (17-24) ----
+  ["What is a computer, functionally?",
+["A device that transforms data into meaningful information: accept, store, process, retrieve, output",
+     "A box with a screen and keyboard",
+     "Anything that runs on electricity",
+     "A machine that only prints documents"], 0],
+  ["Which unit decides when to start and stop receiving data, supervising input, output, processing, and storage?",
+    ["Control Unit", "Arithmetic Logic Unit", "Register", "Hard disk"], 0],
+  ["Which is the tiny, fastest storage INSIDE the CPU holding what it is currently using?",
+    ["Register", "RAM", "ROM", "Solid-state drive"], 0],
+  ["The BIOS chip holds startup software you can read but never rewrite. What is it stored in?",
+    ["RAM", "Flash drive", "Cache", "ROM"], 3],
+  ["How many bits make one byte — enough for one alphanumeric character?",
+    ["1", "4", "8", "16"], 2],
+  ["A gradebook program that records student scores is which kind of software?",
+    ["System software", "Operating system", "Application software", "Device driver"], 2],
+  ["Fifty trainees share one server and the OS divides CPU time fairly among them. Which OS job is this?",
+    ["Resource management", "Virus scanning", "File defragmentation", "Screen brightness control"], 0],
+  ["Upgrading a transfer cable from USB 2.0 to USB 3.0 to raise the ceiling on transfer rate addresses which I/O factor?",
+    ["Device type", "Interface", "CPU and RAM", "OS and drivers"], 1],
+  // ---- Batch (25-32) ----
+  ["What is batch processing?",
+["Periodically completing high-volume, repetitive jobs without human intervention, usually off-peak",
+     "Running one transaction instantly the moment it arrives",
+     "Typing commands live into a server console",
+     "Playing back screen recordings of work"], 0],
+  ["An ISP records usage all month, then at 11:59 PM on the last day generates 10,000 invoices at once. Why batch instead of billing each use instantly?",
+["Batching is the only way computers can add numbers",
+     "Customers prefer errors",
+     "Invoices cannot be emailed at night",
+     "Transactions accumulate, then one scheduled run reads, calculates, invoices, updates, and emails everything together"], 3],
+  ["In the payroll example (300 staff, paid 15th and 30th), what happens between gross pay and net pay?",
+    ["Nothing — gross equals net",
+     "Compute overtime, then deduct taxes and benefits",
+     "Send payslips first, calculate later",
+     "Delete the attendance records"], 1],
+  ["A bank batches 2,000 credit applications at 10:00 PM. One returns “Pending”. What does that mean?",
+    ["Approved instantly",
+     "Declined forever",
+     "Needs additional review before a decision",
+     "Lost in the queue"], 2],
+  ["A job stream starts the moment a supplier file lands in a folder. What trigger is this?",
+    ["Time-based", "Manual", "Dependency-based", "Event-based"], 3],
+  ["PGM9 is configured to run only after PGM5 AND PGM8 complete successfully. What is this?",
+    ["A time trigger", "A dependency in the stream's control logic", "A return code", "A rerun"], 1],
+  ["A batch step ends with return code 4. What should the stream do?",
+["Treat it as success with zero meaning",
+     "Delete all previous outputs",
+     "Treat it as a hard error and stop everything",
+     "Treat it as a warning — it may still proceed"], 3],
+  ["A middle step fails but earlier outputs are intact and valid. What is the right call?",
+    ["Rerun the entire stream from scratch",
+     "Restart from the point of failure, keeping completed work",
+     "Delete the job definitions",
+     "Wait until next month"], 1],
+  // ---- Databases (33-37) ----
+  ["Alice has $500, Bob $300. Debit Alice $100 succeeds, then crediting Bob fails. Under ACID atomicity, what happens?",
+["The whole transaction rolls back — both balances unchanged",
+     "Bob keeps nothing, Alice loses $100",
+     "Bob gets $100 anyway",
+     "Half the transaction commits"], 0],
+  ["ACID prioritizes consistency even if it must fail; BASE prioritizes availability and accepts temporary inconsistency. When would you pick BASE?",
+    ["Bank ledger transfers",
+     "A social feed that must stay up for millions, where posts converging seconds later is fine",
+     "Airline seat booking",
+     "Payroll calculation"], 1],
+  ["You post a status and see it instantly, but friends see it seconds later. Which properties does this show?",
+["Atomicity and isolation",
+     "No properties at all",
+     "Strong consistency only",
+     "Basically available and eventually consistent"], 3],
+  ["A bank ledger needs absolute consistency plus relationships between accounts and transactions. Which fits?",
+    ["SQL", "NoSQL key-value store", "A spreadsheet on a shared drive", "Plain text files"], 0],
+  ["Millions of JSON posts spread across many servers, scale matters more than instant consistency. Which fits?",
+    ["Strict SQL with full transactions",
+     "NoSQL, scaling horizontally with eventual consistency",
+     "A single CSV file",
+     "Paper forms"], 1],
+  // ---- Sort & Search (38-42) ----
+  ["Why must data be sorted before binary search works?",
+    ["Binary search only divides a range that is already ordered — like finding a word in a dictionary",
+     "Sorted data uses less disk space",
+     "Unsorted data crashes the CPU",
+     "Binary search rewrites the data"], 0],
+  ["You only need the single highest score from a list. What is the efficient move?",
+["Sort the whole list first",
+     "Run binary search",
+     "Use max() — sorting the entire list just for one value wastes time",
+     "Shuffle then pick first"], 2],
+  ["An algorithm repeatedly finds the smallest remaining element and puts it in place. Which is it?",
+    ["Bubble sort", "Selection sort", "Merge sort", "Hash lookup"], 1],
+  ["One algorithm splits the list into halves, sorts them, and merges; another picks a pivot and partitions. Which pair?",
+    ["Bubble and selection",
+     "Linear and binary search",
+     "Merge sort and quick sort",
+     "Heap sort and hash lookup"], 2],
+  ["You must look up user profiles by username, instantly and frequently. Which fits?",
+["Bubble sort the profiles each time",
+     "Linear scan from the top",
+     "Sort then binary search on every request",
+     "Hash table lookup: key maps straight to the value"], 3],
+  // ---- Flowcharting (43-46) ----
+  ["In a flowchart, a diamond means what?",
+    ["Start or end of the process",
+     "An action or operation",
+     "A Yes/No decision point",
+     "Data entry or display"], 2],
+  ["Where does “Enter username and password” belong?",
+    ["Oval", "Rectangle", "Diamond", "Parallelogram, the input/output symbol"], 3],
+  ["Oval versus circle in a flowchart: what is the difference?",
+    ["Oval marks start/end; circle is a connector joining flow sections",
+     "They mean exactly the same thing",
+     "Circle starts, oval ends",
+     "Oval is for decisions"], 0],
+  ["In the login validation example the password check fails. What happens next?",
+    ["Jump straight to End",
+     "Display an error, then End",
+     "Grant access anyway",
+     "Restart the computer"], 1],
+  // ---- Pseudocoding (47-50) ----
+  ["Which line VIOLATES pseudocode rules?",
+    ["INPUT age",
+     "IF age >= 18 THEN",
+     "System.out.println(\"Hi\");",
+     "OUTPUT \"Eligible\""], 2],
+  ["Trace: INPUT age (16); IF age >= 18 THEN OUTPUT “Eligible” ELSE OUTPUT “Not eligible”; ENDIF. What prints?",
+    ["Eligible", "16", "Nothing", "Not eligible"], 3],
+  ["Trace: FOR i = 1 TO 5, OUTPUT i, ENDFOR. What prints?",
+    ["1 2 3 4", "1 2 3 4 5", "5 only", "It loops forever"], 1],
+  ["A pseudocode IF block has no ENDIF. What breaks?",
+    ["Nothing, ENDIF is decoration",
+     "Where the decision ends is undefined, so the structure is ambiguous",
+     "The program runs faster",
+     "Variables delete themselves"], 1],
+];
+
+// One-time: apply rebalanced answer positions to the live exam.
+export const fixExamChoices = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const days = await ctx.db.query("days").collect();
+    const d6 = days.find((d) => d.dayNo === 6);
+    const quizzes = await ctx.db.query("quizzes").collect();
+    const exam = quizzes.find((q) => q.title === TITLE && (!d6 || String(q.dayId) === String(d6._id)));
+    if (!exam) throw new Error("Exam not found");
+    const qs = await ctx.db
+      .query("questions")
+      .withIndex("by_quiz", (q) => q.eq("quizId", exam._id))
+      .collect();
+    const fixes: { order: number; choices: string[]; answerIndex: number }[] = [
+    { order: 2, choices: ["Algorithms first, one language done well, substantial problems to solve","Mastering machine language on one specific computer","Memorizing operating-system commands","Assembling computers from parts"], answerIndex: 0 },
+    { order: 4, choices: ["Retrieve, organize, produce, analyze, transmit","Analyze, produce, transmit, retrieve, organize","Transmit, produce, retrieve, organize, analyze","Produce, analyze, organize, transmit, retrieve"], answerIndex: 3 },
+    { order: 5, choices: ["Hardware, software, networks","Input, output, and storage","Data structures and languages; multi-user organization; text processing and retrieval","Analysis, design, and testing"], answerIndex: 2 },
+    { order: 7, choices: ["Design, analysis, operation, implementation","Operation, implementation, design, analysis","Implementation, operation, analysis, design","Analysis, design, implementation, operation"], answerIndex: 3 },
+    { order: 9, choices: ["Bringing subsystem parts into one coordinated whole that delivers the overarching function","Writing a single program from scratch","Buying faster hardware for the team","Training users on new software"], answerIndex: 0 },
+    { order: 10, choices: ["Processes and tools over individuals and interactions","Following a plan over responding to change","Contract negotiation over customer collaboration","Working software over comprehensive documentation"], answerIndex: 3 },
+    { order: 13, choices: ["Product Backlog","Definition of Done","Increment","Sprint Backlog"], answerIndex: 3 },
+    { order: 17, choices: ["A device that transforms data into meaningful information: accept, store, process, retrieve, output","A box with a screen and keyboard","Anything that runs on electricity","A machine that only prints documents"], answerIndex: 0 },
+    { order: 20, choices: ["RAM","Flash drive","Cache","ROM"], answerIndex: 3 },
+    { order: 22, choices: ["System software","Operating system","Application software","Device driver"], answerIndex: 2 },
+    { order: 25, choices: ["Periodically completing high-volume, repetitive jobs without human intervention, usually off-peak","Running one transaction instantly the moment it arrives","Typing commands live into a server console","Playing back screen recordings of work"], answerIndex: 0 },
+    { order: 26, choices: ["Batching is the only way computers can add numbers","Customers prefer errors","Invoices cannot be emailed at night","Transactions accumulate, then one scheduled run reads, calculates, invoices, updates, and emails everything together"], answerIndex: 3 },
+    { order: 29, choices: ["Time-based","Manual","Dependency-based","Event-based"], answerIndex: 3 },
+    { order: 31, choices: ["Treat it as success with zero meaning","Delete all previous outputs","Treat it as a hard error and stop everything","Treat it as a warning — it may still proceed"], answerIndex: 3 },
+    { order: 33, choices: ["The whole transaction rolls back — both balances unchanged","Bob keeps nothing, Alice loses $100","Bob gets $100 anyway","Half the transaction commits"], answerIndex: 0 },
+    { order: 35, choices: ["Atomicity and isolation","No properties at all","Strong consistency only","Basically available and eventually consistent"], answerIndex: 3 },
+    { order: 39, choices: ["Sort the whole list first","Run binary search","Use max() — sorting the entire list just for one value wastes time","Shuffle then pick first"], answerIndex: 2 },
+    { order: 42, choices: ["Bubble sort the profiles each time","Linear scan from the top","Sort then binary search on every request","Hash table lookup: key maps straight to the value"], answerIndex: 3 },
+    { order: 48, choices: ["Eligible","16","Nothing","Not eligible"], answerIndex: 3 },
+    ];
+    let fixed = 0;
+    for (const f of fixes) {
+      const q = qs.find((x) => x.order === f.order);
+      if (q) {
+        await ctx.db.patch(q._id, { choices: f.choices, answerIndex: f.answerIndex });
+        fixed++;
+      }
+    }
+    return { fixed };
+  },
+});
+
+export const seedExam = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const all = await ctx.db.query("quizzes").collect();
+    if (all.some((q) => q.title === TITLE)) return { skipped: true };
+    const days = await ctx.db.query("days").collect();
+    const d6 = days.find((d) => d.dayNo === 6);
+    const quizId = await ctx.db.insert("quizzes", {
+      dayId: d6?._id,
+      title: TITLE,
+      description:
+        "Comprehensive output for Weeks 1–2: readings, SDLC, computers, batch, databases, sort and search, flowcharts, pseudocode. 1 pt each, scaled to a 100 XP pool.",
+      points: 100,
+      active: true,
+    });
+    let order = 1;
+    for (const [prompt, choices, answerIndex] of ITEMS) {
+      await ctx.db.insert("questions", {
+        quizId,
+        prompt,
+        choices,
+        answerIndex,
+        points: 1,
+        order: order++,
+      });
+    }
+    return { skipped: false, count: ITEMS.length };
+  },
+});
+
 export const ensureAdmin = mutation({
   args: { username: v.string(), password: v.string(), displayName: v.string() },
   handler: async (ctx, args) => {
