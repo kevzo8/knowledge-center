@@ -9,7 +9,11 @@ import { Check, ChevronDown, ChevronRight, ExternalLink, Paperclip, RefreshCw, S
 
 export default function Admin() {
   const { token, me, loading } = useMe();
-  const [tab, setTab] = useState<"users" | "days" | "activities" | "quiz" | "overview" | "grading">("users");
+  const [tab, setTab] = useState<"users" | "days" | "activities" | "quiz" | "overview" | "grading" | "inbox">("users");
+  const unread = useQuery(
+    (api as any)?.feedback?.openCount,
+    token ? { token } : "skip"
+  ) as number | undefined;
 
   if (loading) return <p className="p-10 text-center text-sm">Loading…</p>;
   if (!token || !me)
@@ -38,13 +42,13 @@ export default function Admin() {
         </div>
       </div>
       <div className="mt-4 flex flex-wrap gap-2">
-        {(["users", "days", "activities", "quiz", "overview", "grading"] as const).map((t) => (
+        {(["users", "days", "activities", "quiz", "overview", "grading", "inbox"] as const).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
             className={`rounded-full px-4 py-2 text-sm font-bold ${tab === t ? "btn-primary" : "border"}`}
           >
-            {t === "users" ? "Users" : t === "days" ? "Days & lectures" : t === "activities" ? "Activities" : t === "quiz" ? "Quizzes" : t === "overview" ? "Trainees" : "Grading"}
+            {t === "users" ? "Users" : t === "days" ? "Days & lectures" : t === "activities" ? "Activities" : t === "quiz" ? "Quizzes" : t === "overview" ? "Trainees" : t === "grading" ? "Grading" : `Inbox${unread ? ` (${unread})` : ""}`}
           </button>
         ))}
       </div>
@@ -56,6 +60,7 @@ export default function Admin() {
         {tab === "quiz" && <QuizPanel token={token} />}
         {tab === "overview" && <OverviewPanel token={token} isAdmin={me.role === "admin"} />}
         {tab === "grading" && <GradingPanel token={token} meUsername={me.username} />}
+        {tab === "inbox" && <InboxPanel token={token} />}
       </div>
     </main>
   );
@@ -1398,5 +1403,97 @@ function GradeEntry({ token, evaluationId, meUsername }: { token: string; evalua
       })}
       {msg && <p className="text-xs">{msg}</p>}
     </div>
+  );
+}
+
+function InboxPanel({ token }: { token: string }) {
+  const [status, setStatus] = useState<"all" | "open" | "answered" | "closed">("open");
+  const threads = useQuery(
+    (api as any)?.feedback?.listThreads,
+    { token, status: status === "all" ? undefined : (status as any) }
+  ) as any[] | undefined;
+  const replyStaff = useMutation((api as any)?.feedback?.replyStaff);
+  const setThreadStatus = useMutation((api as any)?.feedback?.setStatus);
+  const [openId, setOpenId] = useState<string | null>(null);
+  const [reply, setReply] = useState("");
+  const [msg, setMsg] = useState("");
+
+  return (
+    <section className="space-y-2">
+      <div className="flex items-center gap-2">
+        <h2 className="font-bold">Inbox — suggestions, comments, questions</h2>
+        <select className="ml-auto rounded-full border px-3 py-1.5 text-xs" value={status} onChange={(e) => setStatus(e.target.value as any)}>
+          {(["all", "open", "answered", "closed"] as const).map((s) => (
+            <option key={s} value={s}>{s}</option>
+          ))}
+        </select>
+      </div>
+      {!threads && <p className="text-sm text-slate-500">Loading…</p>}
+      {threads?.map((t) => {
+        const isOpen = openId === String(t._id);
+        return (
+          <div key={String(t._id)} className="rounded-2xl border bg-white px-4 py-3">
+            <button onClick={() => { setOpenId(isOpen ? null : String(t._id)); setReply(""); }} className="flex w-full items-center gap-2 text-left">
+              <span className="min-w-0 flex-1">
+                <span className="block truncate font-bold">{t.subject}</span>
+                <span className="block text-xs text-slate-500">
+                  {t.kind} • {t.status} • {t.author} (@{t.username}) • {t.replies.length} repl{t.replies.length === 1 ? "y" : "ies"}
+                </span>
+              </span>
+            </button>
+            {isOpen && (
+              <div className="mt-2 border-t pt-2 text-sm">
+                <p className="whitespace-pre-wrap rounded-xl bg-slate-50 p-2.5">{t.body}</p>
+                <div className="mt-2 space-y-1.5">
+                  {t.replies.map((r: any, i: number) => (
+                    <div key={i} className={`rounded-xl p-2.5 ${r.mine ? "" : "ml-6 bg-emerald-50 dark:bg-emerald-950/50"}`}>
+                      <p className="whitespace-pre-wrap">{r.body}</p>
+                      <p className="mt-0.5 text-[11px] text-slate-500">
+                        {r.mine ? `${t.author} (trainee)` : r.by} • {new Date(r.at).toLocaleString()}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-2 flex gap-2">
+                  <input
+                    className="min-w-0 flex-1 rounded-xl border px-3 py-2 text-sm"
+                    placeholder="Reply as staff…"
+                    value={reply}
+                    onChange={(e) => setReply(e.target.value)}
+                  />
+                  <button
+                    onClick={async () => {
+                      if (!reply.trim()) return;
+                      await (replyStaff as any)({ token, feedbackId: t._id, body: reply.trim() });
+                      setReply("");
+                    }}
+                    className="btn-primary shrink-0 rounded-xl px-4 py-2 text-sm font-bold"
+                  >
+                    Reply
+                  </button>
+                  <select
+                    className="shrink-0 rounded-xl border px-2 py-2 text-xs"
+                    value={t.status}
+                    onChange={async (e) => {
+                      try {
+                        await (setThreadStatus as any)({ token, feedbackId: t._id, status: e.target.value });
+                      } catch (err: any) {
+                        setMsg(err?.message ?? "Error");
+                      }
+                    }}
+                  >
+                    <option value="open">open</option>
+                    <option value="answered">answered</option>
+                    <option value="closed">closed</option>
+                  </select>
+                </div>
+                {msg && <p className="mt-1 text-xs">{msg}</p>}
+              </div>
+            )}
+          </div>
+        );
+      })}
+      {threads && threads.length === 0 && <p className="text-sm text-slate-500">Nothing here.</p>}
+    </section>
   );
 }

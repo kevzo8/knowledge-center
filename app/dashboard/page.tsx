@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 import ProgressSection from "../../components/ProgressSection";
 import StaffOverview from "../../components/StaffOverview";
 import ThemeToggle from "../../components/ThemeToggle";
-import { CalendarDays, Settings, Trophy } from "lucide-react";
+import { CalendarDays, Inbox, Settings, Trophy } from "lucide-react";
 
 export default function Dashboard() {
   const { token, me, loading } = useMe();
@@ -83,7 +83,7 @@ export default function Dashboard() {
         <StaffOverview token={token} />
       ) : (
       <>
-      <section className="mt-5">
+      <section className="mt-5 grid gap-2 sm:grid-cols-2">
         <Link
           href="/"
           className="card-lift flex items-center justify-between rounded-2xl border bg-white p-4"
@@ -93,6 +93,16 @@ export default function Dashboard() {
             <span className="block font-bold">Browse all 20 days →</span>
           </span>
           <CalendarDays size={24} className="text-indigo-600" />
+        </Link>
+        <Link
+          href="/feedback"
+          className="card-lift flex items-center justify-between rounded-2xl border bg-white p-4"
+        >
+          <span>
+            <span className="block text-xs font-bold uppercase tracking-widest text-indigo-600">Suggestion box</span>
+            <span className="block font-bold">Ask, suggest, comment →</span>
+          </span>
+          <Inbox size={24} className="text-indigo-600" />
         </Link>
       </section>
 

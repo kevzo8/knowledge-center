@@ -105,6 +105,26 @@ export default defineSchema({
     createdAt: v.number(),
   }).index("by_user", ["userId"]),
 
+  // Suggestion box: threads + replies. hasNewReply pings the trainee.
+  feedback: defineTable({
+    userId: v.id("users"),
+    kind: v.union(v.literal("suggestion"), v.literal("comment"), v.literal("question")),
+    subject: v.string(),
+    body: v.string(),
+    status: v.union(v.literal("open"), v.literal("answered"), v.literal("closed")),
+    hasNewReply: v.boolean(),
+    createdAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_status", ["status"]),
+
+  feedbackReplies: defineTable({
+    feedbackId: v.id("feedback"),
+    userId: v.id("users"),
+    body: v.string(),
+    createdAt: v.number(),
+  }).index("by_feedback", ["feedbackId"]),
+
   // Reusable judging rubrics: category -> criteria with max scores.
   // e.g. War Card & Solitaire panel sheet, Project Proposal sheet.
   rubrics: defineTable({

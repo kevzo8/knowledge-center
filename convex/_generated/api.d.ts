@@ -10,6 +10,7 @@
 
 import type * as auth from "../auth.js";
 import type * as content from "../content.js";
+import type * as feedback from "../feedback.js";
 import type * as grading from "../grading.js";
 import type * as quizzes from "../quizzes.js";
 import type * as seed from "../seed.js";
@@ -23,6 +24,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   content: typeof content;
+  feedback: typeof feedback;
   grading: typeof grading;
   quizzes: typeof quizzes;
   seed: typeof seed;
