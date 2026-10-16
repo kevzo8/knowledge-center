@@ -246,6 +246,12 @@ export const submitQuiz = mutation({
     const u = await getSessionUser(ctx, args.token);
     const quiz = await ctx.db.get(args.quizId);
     if (!quiz || !quiz.active) throw new Error("Quiz not available");
+    // One attempt only — locked after submit.
+    const prior = await ctx.db
+      .query("attempts")
+      .withIndex("by_user_quiz", (q) => q.eq("userId", u._id).eq("quizId", args.quizId))
+      .collect();
+    if (prior.length > 0) throw new Error("Already submitted — one attempt only");
     const questions = await ctx.db
       .query("questions")
       .withIndex("by_quiz", (q) => q.eq("quizId", args.quizId))
@@ -262,14 +268,6 @@ export const submitQuiz = mutation({
       }
     });
     const count = sorted.length;
-    // Anti-farm: retakes only pay the improvement over your previous best.
-    const prior = await ctx.db
-      .query("attempts")
-      .withIndex("by_user_quiz", (q) => q.eq("userId", u._id).eq("quizId", args.quizId))
-      .collect();
-    const prevBest = prior.reduce((m, a) => Math.max(m, a.score), 0);
-    const prevPerfect = prior.some((a) => a.total > 0 && a.score >= a.total);
-    const pool = quiz.points > 0 ? quiz.points : 100;
     const attemptId = await ctx.db.insert("attempts", {
       userId: u._id,
       quizId: args.quizId,
@@ -279,12 +277,10 @@ export const submitQuiz = mutation({
       createdAt: Date.now(),
     });
     // XP = percent correct x pool (each question is 1 pt), plus perfect
-    // bonus +20% of pool (first perfect only). Retakes pay improvement only.
+    // bonus +20% of pool. Single attempt, so no retake math needed.
     const pct = count ? correct / count : 0;
-    const prevPct = total && prevBest ? Math.min(1, prevBest / total) : 0;
-    const xp =
-      Math.max(0, Math.round(pct * pool) - Math.round(prevPct * pool)) +
-      (pct === 1 && count > 0 && !prevPerfect ? Math.ceil(pool * 0.2) : 0);
+    const pool = quiz.points > 0 ? quiz.points : 100;
+    const xp = Math.round(pct * pool) + (pct === 1 && count > 0 ? Math.ceil(pool * 0.2) : 0);
     if (xp > 0) {
       await ctx.db.insert("xpEvents", {
         userId: u._id,
@@ -310,7 +306,17 @@ export const myAttempts = query({
           q.eq("userId", u._id).eq("quizId", args.quizId!)
         )
         .collect();
-      return rows.sort((a, b) => b.createdAt - a.createdAt);
+      const key = (
+        await ctx.db
+          .query("questions")
+          .withIndex("by_quiz", (q) => q.eq("quizId", args.quizId!))
+          .collect()
+      )
+        .sort((a, b) => a.order - b.order)
+        .map((q) => q.answerIndex);
+      return rows
+        .sort((a, b) => b.createdAt - a.createdAt)
+        .map((a) => ({ ...a, key }));
     }
     const rows = await ctx.db
       .query("attempts")

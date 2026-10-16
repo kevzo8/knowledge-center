@@ -5,7 +5,7 @@ import { useMe } from "../../../lib/useMe";
 import { use, useState } from "react";
 import Link from "next/link";
 import ThemeToggle from "../../../components/ThemeToggle";
-import { BookOpen, Check, ExternalLink, FlaskConical, Paperclip, Play } from "lucide-react";
+import { BookOpen, Check, ExternalLink, FlaskConical, Paperclip, Play, X } from "lucide-react";
 import { DECKS } from "../../../data/decks";
 
 export default function DayPage({ params }: { params: Promise<{ dayId: string }> }) {
@@ -205,12 +205,75 @@ function LectureFile({ fileId, fileName }: { fileId: string; fileName: string })
 function QuizTaker({ quizId, token }: { quizId: string; token: string | null }) {
   const quiz = useQuery((api as any)?.quizzes?.getQuiz, { quizId: quizId as any }) as any;
   const submit = useMutation((api as any)?.quizzes?.submitQuiz);
+  const my = useQuery(
+    (api as any)?.quizzes?.myAttempts,
+    token ? { token, quizId: quizId as any } : "skip"
+  ) as any[] | undefined;
   const [answers, setAnswers] = useState<number[]>([]);
-  const [result, setResult] = useState<any>(null);
+  const [err, setErr] = useState("");
 
   if (!quiz) return <p className="text-xs text-slate-500">Loading quiz…</p>;
+  const attempt = my && my.length > 0 ? my[0] : null;
+
+  // Locked: one attempt used — show what they got right and wrong.
+  if (attempt) {
+    const pct = attempt.total ? Math.round((attempt.score / attempt.total) * 100) : 0;
+    return (
+      <div className="mt-2 space-y-2">
+        <p className="flex items-center gap-1.5 rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2 text-sm font-bold text-indigo-900 dark:border-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-200">
+          <Check size={15} /> Submitted: {attempt.score}/{attempt.total} ({pct}%) — one attempt only
+        </p>
+        {quiz.questions.map((q: any, qi: number) => {
+          const picked = attempt.answers?.[qi];
+          const key: number[] = attempt.key ?? [];
+          const ok = picked === q.answerIndex;
+          return (
+            <div
+              key={q._id}
+              className={`rounded-xl border p-3 ${ok ? "border-emerald-300 bg-emerald-50/60 dark:border-emerald-800 dark:bg-emerald-950/40" : "border-red-300 bg-red-50/60 dark:border-red-800 dark:bg-red-950/40"}`}
+            >
+              <p className="text-sm font-bold">
+                {qi + 1}. {q.prompt}{" "}
+                <span className={`ml-1 rounded-md px-1.5 py-0.5 font-mono text-[11px] font-black ${ok ? "bg-emerald-600 text-white" : "bg-red-500 text-white"}`}>
+                  {ok ? "Correct" : "Wrong"}
+                </span>
+              </p>
+              <div className="mt-1 space-y-1 text-sm">
+                {q.choices.map((c: string, ci: number) => {
+                  const isPick = picked === ci;
+                  const isKey = (key[qi] ?? q.answerIndex) === ci;
+                  return (
+                    <p
+                      key={ci}
+                      className={`flex items-center gap-2 rounded-lg px-2 py-1 ${
+                        isKey
+                          ? "bg-emerald-100 font-bold text-emerald-900 dark:bg-emerald-950/70 dark:text-emerald-200"
+                          : isPick
+                            ? "bg-red-100 font-bold text-red-900 line-through dark:bg-red-950/70 dark:text-red-200"
+                            : "text-slate-500"
+                      }`}
+                    >
+                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-slate-200 text-[11px] font-black text-slate-700 dark:bg-slate-700 dark:text-slate-200">
+                        {String.fromCharCode(65 + ci)}
+                      </span>
+                      {isPick && !isKey ? <X size={13} /> : isKey ? <Check size={13} /> : null}
+                      {c}
+                    </p>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
   return (
     <div className="mt-2 space-y-3">
+      <p className="text-xs font-bold uppercase tracking-widest text-amber-600 dark:text-amber-400">
+        One attempt only — review before submitting
+      </p>
       {quiz.questions.map((q: any, qi: number) => (
         <div key={q._id} className="rounded-xl bg-slate-50 p-3">
           <p className="text-sm font-bold">{qi + 1}. {q.prompt}</p>
@@ -239,19 +302,19 @@ function QuizTaker({ quizId, token }: { quizId: string; token: string | null }) 
       {token && (
         <button
           onClick={async () => {
-            const r = await (submit as any)({ token, quizId: quizId as any, answers });
-            setResult(r);
+            setErr("");
+            try {
+              await (submit as any)({ token, quizId: quizId as any, answers });
+            } catch (e: any) {
+              setErr(e?.message ?? "Submit failed");
+            }
           }}
           className="rounded-full bg-indigo-600 px-5 py-2 text-sm font-bold text-white"
         >
           Submit quiz
         </button>
       )}
-      {result && (
-        <p className="flex items-center gap-1.5 text-sm font-bold text-emerald-700">
-          <Check size={15} /> Score: {result.score}/{result.total} • +{result.xp} XP
-        </p>
-      )}
+      {err && <p className="text-sm font-bold text-red-600">{err}</p>}
     </div>
   );
 }
