@@ -93,21 +93,21 @@ export const seedAll = mutation({
     for (const l of lectures) await ctx.db.insert("lectures", l);
 
     const activities = [
-      { dayId: d1, title: "Activity: Reading reflections (3 PDFs)", instructions: "Read the 3 required PDFs. Write 3 bullets each: main idea + one career-path takeaway. Discuss Day 1. (+20 XP)", points: 20, order: 1 },
-      { dayId: d3, title: "Activity: Trace a batch job stream", instructions: "From Batch Processing Examples, list jobs in order + each step's output. (+20 XP)", points: 20, order: 1 },
-      { dayId: d6, title: "Activity: Flowchart → pseudocode", instructions: "Draw a flow (login/ATM), then convert to IF/ELSE + LOOP pseudocode. (+20 XP)", points: 20, order: 1 },
-      { dayId: d8, title: "Activity: Java drills", instructions: "FizzBuzz, reverse string, simple menu with methods. Trainer checks in class. (+20 XP)", points: 20, order: 1 },
-      { dayId: d9, title: "Activity: Model Card/Deck/Player in OOP", instructions: "Classes with encapsulation; Deck shuffles/deals; Player holds hand. (+20 XP)", points: 20, order: 1 },
-      { dayId: d10, title: "Activity: War Card v1 — design + code", instructions: "Per War_Card_Game_v4.docx: class diagram, then playable War incl. tie (WAR!) handling. Demo. (+40 XP)", points: 40, order: 1 },
-      { dayId: d12, title: "Activity: Refactor War with collections/exceptions", instructions: "Replace arrays with List/Map where sensible; add input validation + try/catch. (+20 XP)", points: 20, order: 1 },
-      { dayId: d13, title: "Activity: DRY/SOLID refactor of War", instructions: "Pick one smell (long method, duplication, leaky class) and refactor. Before/after diff. (+20 XP)", points: 20, order: 1 },
-      { dayId: d14, title: "Activity: Concurrency mini-lab", instructions: "Run parallel game simulations with Executor; observe/record race without proper sync. (+20 XP)", points: 20, order: 1 },
-      { dayId: d15, title: "Activity: War Card v2 polish", instructions: "Apply weeks 2–3 feedback. Must run clean + be demo-ready. (+30 XP)", points: 30, order: 1 },
-      { dayId: d16, title: "Activity: Solitaire decomposition", instructions: "From KLONDIKE doc: list piles, legal moves, win condition. Map reuse from War Card classes. (+20 XP)", points: 20, order: 1 },
-      { dayId: d17, title: "Activity: Solitaire engine", instructions: "Implement game state + move validation. Playable in console min. (+40 XP)", points: 40, order: 1 },
-      { dayId: d18, title: "Activity: Solitaire enhanced", instructions: "Add undo, scoring, hints/polish — the 'enhanced from War Card' output. (+40 XP)", points: 40, order: 1 },
-      { dayId: d19, title: "Activity: Test plan + README", instructions: "Edge cases (empty piles, invalid moves), test log, how-to-play README. (+20 XP)", points: 20, order: 1 },
-      { dayId: d20, title: "Activity: Final demo", instructions: "Live Solitaire demo to panel + Q&A. (+30 XP)", points: 30, order: 1 },
+      { dayId: d1, title: "Activity: Reading reflections (3 PDFs)", instructions: "Read the 3 required PDFs. Write 3 bullets each: main idea + one career-path takeaway. Discuss Day 1. (+20 XP)", points: 50, order: 1 },
+      { dayId: d3, title: "Activity: Trace a batch job stream", instructions: "From Batch Processing Examples, list jobs in order + each step's output. (+20 XP)", points: 50, order: 1 },
+      { dayId: d6, title: "Activity: Flowchart → pseudocode", instructions: "Draw a flow (login/ATM), then convert to IF/ELSE + LOOP pseudocode. (+20 XP)", points: 50, order: 1 },
+      { dayId: d8, title: "Activity: Java drills", instructions: "FizzBuzz, reverse string, simple menu with methods. Trainer checks in class. (+20 XP)", points: 50, order: 1 },
+      { dayId: d9, title: "Activity: Model Card/Deck/Player in OOP", instructions: "Classes with encapsulation; Deck shuffles/deals; Player holds hand. (+20 XP)", points: 50, order: 1 },
+      { dayId: d10, title: "Activity: War Card v1 — design + code", instructions: "Per War_Card_Game_v4.docx: class diagram, then playable War incl. tie (WAR!) handling. Demo. (+40 XP)", points: 50, order: 1 },
+      { dayId: d12, title: "Activity: Refactor War with collections/exceptions", instructions: "Replace arrays with List/Map where sensible; add input validation + try/catch. (+20 XP)", points: 50, order: 1 },
+      { dayId: d13, title: "Activity: DRY/SOLID refactor of War", instructions: "Pick one smell (long method, duplication, leaky class) and refactor. Before/after diff. (+20 XP)", points: 50, order: 1 },
+      { dayId: d14, title: "Activity: Concurrency mini-lab", instructions: "Run parallel game simulations with Executor; observe/record race without proper sync. (+20 XP)", points: 50, order: 1 },
+      { dayId: d15, title: "Activity: War Card v2 polish", instructions: "Apply weeks 2–3 feedback. Must run clean + be demo-ready. (+30 XP)", points: 50, order: 1 },
+      { dayId: d16, title: "Activity: Solitaire decomposition", instructions: "From KLONDIKE doc: list piles, legal moves, win condition. Map reuse from War Card classes. (+20 XP)", points: 50, order: 1 },
+      { dayId: d17, title: "Activity: Solitaire engine", instructions: "Implement game state + move validation. Playable in console min. (+40 XP)", points: 50, order: 1 },
+      { dayId: d18, title: "Activity: Solitaire enhanced", instructions: "Add undo, scoring, hints/polish — the 'enhanced from War Card' output. (+40 XP)", points: 50, order: 1 },
+      { dayId: d19, title: "Activity: Test plan + README", instructions: "Edge cases (empty piles, invalid moves), test log, how-to-play README. (+20 XP)", points: 50, order: 1 },
+      { dayId: d20, title: "Activity: Final demo", instructions: "Live Solitaire demo to panel + Q&A. (+30 XP)", points: 50, order: 1 },
     ];
     for (const a of activities) await ctx.db.insert("activities", a);
 
@@ -648,6 +648,24 @@ export const dedupeAttempts = mutation({
       }
     }
     return { removedAttempts, removedXp };
+  },
+});
+
+// One-time: standardize all activities to 50 points and drop stale
+// "(+N XP)" suffixes from instructions (XP now comes from grading).
+export const normalizeActivityPoints = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const all = await ctx.db.query("activities").collect();
+    let fixed = 0;
+    for (const a of all) {
+      const clean = a.instructions.replace(/\s*\(\+\d+\s*XP\)/g, "");
+      if (a.points !== 50 || clean !== a.instructions) {
+        await ctx.db.patch(a._id, { points: 50, instructions: clean });
+        fixed++;
+      }
+    }
+    return { fixed, total: all.length };
   },
 });
 

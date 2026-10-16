@@ -48,6 +48,8 @@ export default function ProgressSection({
     return { cum, maxXp: Math.max(run, 10) };
   }, [history]);
 
+  const [quizSort, setQuizSort] = useState<"best" | "name">("best");
+
   const bestBars = useMemo(() => {
     const best = new Map<string, number>();
     for (const a of history?.attempts ?? []) {
@@ -148,12 +150,27 @@ export default function ProgressSection({
           )}
         </div>
         <div className="rounded-2xl border bg-white p-4">
-          <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Best quiz scores</p>
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Best quiz scores</p>
+            <div className="flex gap-1">
+              {(["best", "name"] as const).map((m) => (
+                <button
+                  key={m}
+                  onClick={() => setQuizSort(m)}
+                  className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold ${quizSort === m ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900" : "border"}`}
+                >
+                  {m === "best" ? "Best first" : "A–Z"}
+                </button>
+              ))}
+            </div>
+          </div>
           {bestBars.length === 0 ? (
             <p className="mt-2 text-sm text-slate-500">No quizzes taken yet — take one from any day.</p>
           ) : (
             <div className="mt-2 space-y-2">
-              {bestBars.map(([title, pct]) => (
+              {[...bestBars]
+                .sort((a, b) => (quizSort === "best" ? b[1] - a[1] : a[0].localeCompare(b[0])))
+                .map(([title, pct]) => (
                 <div key={title}>
                   <div className="flex items-baseline justify-between gap-2 text-xs">
                     <span className="truncate font-bold">{title}</span>
@@ -226,14 +243,31 @@ export default function ProgressSection({
 function MyPanelGrades({ token }: { token: string }) {
   const grades = useQuery((api as any)?.grading?.myGrades, { token }) as any[] | undefined;
   const [open, setOpen] = useState<string | null>(null);
+  const [gSort, setGSort] = useState<"recent" | "best">("recent");
   if (!grades || grades.length === 0) return null;
+  const ordered = [...grades].sort((a, b) =>
+    gSort === "best" ? b.percent - a.percent : b.at - a.at
+  );
   return (
     <div className="mt-2 rounded-2xl border bg-white p-4">
-      <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-slate-500">
-        <Award size={14} /> My grades
-      </p>
+      <div className="flex items-center justify-between gap-2">
+        <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-slate-500">
+          <Award size={14} /> My grades
+        </p>
+        <div className="flex gap-1">
+          {(["recent", "best"] as const).map((m) => (
+            <button
+              key={m}
+              onClick={() => setGSort(m)}
+              className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold ${gSort === m ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900" : "border"}`}
+            >
+              {m === "recent" ? "Recent" : "Best first"}
+            </button>
+          ))}
+        </div>
+      </div>
       <div className="mt-2 space-y-1.5">
-        {grades.map((g, i) => (
+        {ordered.map((g, i) => (
           <div key={i} className="rounded-xl border px-3 py-2">
             <button onClick={() => setOpen(open === `${i}` ? null : `${i}`)} className="flex w-full items-center gap-2 text-left text-sm">
               <span className="min-w-0 flex-1 truncate font-bold">{g.evaluationTitle}</span>

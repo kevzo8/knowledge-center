@@ -476,7 +476,7 @@ function ActivitiesPanel({ token }: { token: string }) {
   const upsertActivity = useMutation((api as any)?.content?.upsertActivity);
   const [dayFilter, setDayFilter] = useState("");
   const [adding, setAdding] = useState(false);
-  const [form, setForm] = useState({ dayId: "", title: "", instructions: "", points: 20, order: 1 });
+  const [form, setForm] = useState({ dayId: "", title: "", instructions: "", points: 50, order: 1 });
   const dayName = (id: string) => {
     const d = days?.find((x) => String(x._id) === String(id));
     return d ? `Day ${d.dayNo}` : "No day";
@@ -517,7 +517,7 @@ function ActivitiesPanel({ token }: { token: string }) {
             onClick={async () => {
               await (upsertActivity as any)({ token, dayId: form.dayId ? (form.dayId as any) : undefined, title: form.title, instructions: form.instructions, points: form.points, order: form.order });
               setAdding(false);
-              setForm({ dayId: form.dayId, title: "", instructions: "", points: 20, order: form.order + 1 });
+              setForm({ dayId: form.dayId, title: "", instructions: "", points: 50, order: form.order + 1 });
             }}
             className="btn-primary rounded-xl py-2 font-bold"
           >
