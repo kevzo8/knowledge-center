@@ -529,9 +529,14 @@ function ActivitiesPanel({ token }: { token: string }) {
 
 function QuizPanel({ token }: { token: string }) {
   const quizzes = useQuery((api as any)?.quizzes?.listQuizzes, {}) as any[] | undefined;
+  const days = useQuery((api as any)?.content?.listDaysAdmin, { token }) as any[] | undefined;
   const upsertQuiz = useMutation((api as any)?.quizzes?.upsertQuiz);
   const [adding, setAdding] = useState(false);
-  const [form, setForm] = useState({ title: "", description: "", points: 100 });
+  const [form, setForm] = useState({ title: "", description: "", points: 100, dayId: "" });
+  const dayName = (id: string) => {
+    const d = days?.find((x) => String(x._id) === String(id));
+    return d ? `Day ${d.dayNo}` : "No day";
+  };
 
   return (
     <section className="space-y-2">
@@ -546,16 +551,22 @@ function QuizPanel({ token }: { token: string }) {
         </button>
       </div>
       {adding && (
-        <div className="grid gap-1.5 rounded-2xl border bg-white p-4 text-sm sm:grid-cols-3">
+        <div className="grid gap-1.5 rounded-2xl border bg-white p-4 text-sm sm:grid-cols-2">
           <input className="rounded-xl border px-3 py-2" placeholder="quiz title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
           <input className="rounded-xl border px-3 py-2" placeholder="description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+          <select className="rounded-xl border px-3 py-2 sm:col-span-2" value={form.dayId} onChange={(e) => setForm({ ...form, dayId: e.target.value })}>
+            <option value="">Show on which day? (required for trainees to see it)</option>
+            {days?.map((d) => (
+              <option key={String(d._id)} value={String(d._id)}>Day {d.dayNo} — {d.title.slice(0, 45)}</option>
+            ))}
+          </select>
           <button
             onClick={async () => {
-              await (upsertQuiz as any)({ token, ...form });
+              await (upsertQuiz as any)({ token, ...form, dayId: form.dayId ? (form.dayId as any) : undefined });
               setAdding(false);
-              setForm({ title: "", description: "", points: 100 });
+              setForm({ title: "", description: "", points: 100, dayId: "" });
             }}
-            className="btn-primary rounded-xl py-2 font-bold"
+            className="btn-primary rounded-xl py-2 font-bold sm:col-span-2"
           >
             Add quiz
           </button>
@@ -563,13 +574,13 @@ function QuizPanel({ token }: { token: string }) {
       )}
       {!quizzes && <p className="text-sm text-slate-500">Loading…</p>}
       {quizzes?.map((q) => (
-        <QuizCard key={String(q._id)} token={token} quiz={q} />
+        <QuizCard key={String(q._id)} token={token} quiz={q} days={days} dayName={q.dayId ? dayName(String(q.dayId)) : "No day — invisible to trainees"} />
       ))}
     </section>
   );
 }
 
-function QuizCard({ token, quiz }: { token: string; quiz: any }) {
+function QuizCard({ token, quiz, dayName, days }: { token: string; quiz: any; dayName: string; days: any[] | undefined }) {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState(false);
   const [addingQ, setAddingQ] = useState(false);
@@ -579,7 +590,7 @@ function QuizCard({ token, quiz }: { token: string; quiz: any }) {
   ) as any;
   const upsertQuiz = useMutation((api as any)?.quizzes?.upsertQuiz);
   const deleteQuiz = useMutation((api as any)?.quizzes?.deleteQuiz);
-  const [f, setF] = useState({ title: quiz.title, description: quiz.description ?? "", points: quiz.points, active: quiz.active });
+  const [f, setF] = useState({ title: quiz.title, description: quiz.description ?? "", points: quiz.points, active: quiz.active, dayId: quiz.dayId ? String(quiz.dayId) : "" });
   const questions = full?.questions ?? [];
 
   return (
@@ -589,7 +600,8 @@ function QuizCard({ token, quiz }: { token: string; quiz: any }) {
         <span className="min-w-0 flex-1">
           <span className="block truncate font-bold">{quiz.title}</span>
           <span className="block text-xs text-slate-500">
-            {open ? (full ? `${questions.length} question(s) — click one to edit` : "loading…") : "click to view questions"}
+            {dayName}
+            {open ? (full ? ` • ${questions.length} question(s) — click one to edit` : " • loading…") : " • click to view questions"}
             {!quiz.active && " • HIDDEN"}
           </span>
         </span>
@@ -617,15 +629,21 @@ function QuizCard({ token, quiz }: { token: string; quiz: any }) {
             <div className="mt-2 grid gap-1.5 text-sm sm:grid-cols-3">
               <input className="rounded-xl border px-3 py-2" value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} placeholder="title" />
               <input className="rounded-xl border px-3 py-2" value={f.description} onChange={(e) => setF({ ...f, description: e.target.value })} placeholder="description" />
+              <select className="rounded-xl border px-3 py-2" value={f.dayId} onChange={(e) => setF({ ...f, dayId: e.target.value })}>
+                <option value="">No day (hidden from trainees)</option>
+                {days?.map((d) => (
+                  <option key={String(d._id)} value={String(d._id)}>Day {d.dayNo} — {d.title.slice(0, 40)}</option>
+                ))}
+              </select>
               <label className="text-xs">XP pool (100 = % becomes XP)
                 <input type="number" min={1} className="mt-0.5 w-full rounded-xl border px-3 py-2" value={f.points} onChange={(e) => setF({ ...f, points: Number(e.target.value) })} />
               </label>
-              <label className="flex items-center gap-2 text-xs sm:col-span-2">
+              <label className="flex items-center gap-2 text-xs">
                 <input type="checkbox" checked={f.active} onChange={(e) => setF({ ...f, active: e.target.checked })} /> Visible to trainees
               </label>
               <button
                 onClick={async () => {
-                  await (upsertQuiz as any)({ token, quizId: quiz._id, ...f });
+                  await (upsertQuiz as any)({ token, quizId: quiz._id, ...f, dayId: f.dayId ? (f.dayId as any) : undefined });
                   setEditing(false);
                 }}
                 className="btn-primary rounded-xl py-2 font-bold"
