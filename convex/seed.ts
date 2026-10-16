@@ -585,6 +585,39 @@ export const seedExam = mutation({
   },
 });
 
+// One-time: add a 5th item to the Week 1 foundations quiz.
+export const addWeek1Question = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const quizzes = await ctx.db.query("quizzes").collect();
+    const quiz = quizzes.find((q) => q.title === "Quiz: Week 1 foundations");
+    if (!quiz) throw new Error("Week 1 quiz not found");
+    const existing = await ctx.db
+      .query("questions")
+      .withIndex("by_quiz", (q) => q.eq("quizId", quiz._id))
+      .collect();
+    if (existing.some((q) => q.prompt.startsWith("Your app must find names"))) {
+      return { skipped: true };
+    }
+    const order = existing.reduce((m, q) => Math.max(m, q.order), 0) + 1;
+    await ctx.db.insert("questions", {
+      quizId: quiz._id,
+      prompt:
+        "Your app must find names in a 1,000,000-record sorted list, many times per second. Which approach?",
+      choices: [
+        "Linear scan from the top on every request",
+        "Binary search, halving the range each step",
+        "Bubble sort the list before each lookup",
+        "Shuffle the list, then pick at random",
+      ],
+      answerIndex: 1,
+      points: 1,
+      order,
+    });
+    return { skipped: false };
+  },
+});
+
 export const ensureAdmin = mutation({
   args: { username: v.string(), password: v.string(), displayName: v.string() },
   handler: async (ctx, args) => {
